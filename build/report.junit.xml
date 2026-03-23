@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/Users/vfarylevych/Developer/github/jwt-auth/phpunit.xml.dist" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.035233">
+    <testsuite name="jwt-auth Test Suite" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.035233">
+      <testsuite name="ArtTiger\JWTAuth\Test\Claims\ClaimTest" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.035233">
+        <testcase name="testItShouldThrowAnExceptionWhenPassingAnInvalidValue" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" line="26" class="ArtTiger\JWTAuth\Test\Claims\ClaimTest" classname="ArtTiger.JWTAuth.Test.Claims.ClaimTest" assertions="2" time="0.033429"/>
+        <testcase name="testItShouldConvertTheClaimToAnArray" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" line="34" class="ArtTiger\JWTAuth\Test\Claims\ClaimTest" classname="ArtTiger.JWTAuth.Test.Claims.ClaimTest" assertions="1" time="0.000385"/>
+        <testcase name="testItShouldGetTheClaimAsAString" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" line="39" class="ArtTiger\JWTAuth\Test\Claims\ClaimTest" classname="ArtTiger.JWTAuth.Test.Claims.ClaimTest" assertions="3" time="0.000987"/>
+        <testcase name="testItShouldGetTheObjectAsJson" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" line="44" class="ArtTiger\JWTAuth\Test\Claims\ClaimTest" classname="ArtTiger.JWTAuth.Test.Claims.ClaimTest" assertions="3" time="0.000106"/>
+        <testcase name="testItShouldImplementArrayable" file="/Users/vfarylevych/Developer/github/jwt-auth/tests/Claims/ClaimTest.php" line="49" class="ArtTiger\JWTAuth\Test\Claims\ClaimTest" classname="ArtTiger.JWTAuth.Test.Claims.ClaimTest" assertions="1" time="0.000326"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
