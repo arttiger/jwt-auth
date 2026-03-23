@@ -1,30 +1,20 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Exceptions;
 
-use ArtTiger\JWTAuth\Claims\Claim;
+use ArtTiger\JWTAuth\Abstracts\Claim;
+use Throwable;
 
 class InvalidClaimException extends JWTException
 {
-    /**
-     * Constructor.
-     *
-     * @param int $code
-     *
-     * @return void
-     */
-    public function __construct(Claim $claim, $code = 0, ?\Exception $previous = null)
+    public function __construct(Claim $claim, int $code = 0, ?Throwable $previous = null)
     {
-        parent::__construct('Invalid value provided for claim ['.$claim->getName().']', $code, $previous);
+        parent::__construct(
+            message: "Invalid value provided for claim [{$claim->getName()}]",
+            code: $code,
+            previous: $previous,
+        );
     }
 }
