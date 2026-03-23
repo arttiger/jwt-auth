@@ -1,48 +1,33 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Contracts\Providers;
 
 interface Storage
 {
     /**
-     * @param string $key
-     * @param int    $minutes
-     *
-     * @return void
+     * Add an item to storage for a given number of minutes.
      */
-    public function add($key, $value, $minutes);
+    public function add(string $key, mixed $value, int $minutes): void;
 
     /**
-     * @param string $key
-     *
-     * @return void
+     * Add an item to storage indefinitely.
      */
-    public function forever($key, $value);
+    public function forever(string $key, mixed $value): void;
 
     /**
-     * @param string $key
+     * Get an item from storage.
      */
-    public function get($key);
+    public function get(string $key): mixed;
 
     /**
-     * @param string $key
-     *
-     * @return bool
+     * Remove an item from storage.
      */
-    public function destroy($key);
+    public function destroy(string $key): bool;
 
     /**
-     * @return void
+     * Remove all items from storage.
      */
-    public function flush();
+    public function flush(): void;
 }

@@ -4,60 +4,68 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Claims;
 
+use ArtTiger\JWTAuth\Abstracts\Claim;
 use Illuminate\Support\Collection as IlluminateCollection;
 use Illuminate\Support\Str;
 
+/**
+ * @extends IlluminateCollection<string, Claim>
+ */
 class Collection extends IlluminateCollection
 {
     /**
-     * Create a new collection.
-     *
-     * @return void
+     * @param iterable<mixed>|Claim[] $items
      */
-    public function __construct($items = [])
+    public function __construct(mixed $items = [])
     {
         parent::__construct($this->getArrayableItems($items));
     }
 
     /**
-     * Get a Claim instance by it's unique name.
+     * Get a Claim instance by its unique name.
      */
-    public function getByClaimName(string $name, ?callable $callback = null, $default = null): Claim
+    public function getByClaimName(string $name): ?Claim
     {
-        return $this->filter(function (Claim $claim) use ($name) {
-            return $claim->getName() === $name;
-        })->first($callback, $default);
+        foreach ($this->items as $claim) {
+            if ($claim->getName() === $name) {
+                return $claim;
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Validate each claim under a given context.
+     * Validate each claim under a given context ('payload' or 'refresh').
      */
     public function validate(string $context = 'payload'): static
     {
         $args = func_get_args();
         array_shift($args);
 
-        $this->each(function ($claim) use ($context, $args) {
-            call_user_func_array(
-                [$claim, 'validate'.Str::ucfirst($context)],
-                $args
-            );
+        $this->each(function (Claim $claim) use ($context, $args): void {
+            $method = 'validate'.Str::ucfirst($context);
+            if (method_exists($claim, $method)) {
+                $claim->$method(...$args);
+            }
         });
 
         return $this;
     }
 
     /**
-     * Determine if the Collection contains all the given keys.
+     * Determine if the collection contains all the given claim keys.
+     *
+     * @param string[] $claims
      */
-    public function hasAllClaims($claims): bool
+    public function hasAllClaims(array $claims): bool
     {
-        if (!count($claims)) {
+        if (count($claims) === 0) {
             return false;
         }
 
         foreach ($claims as $claim) {
-            if (!$this->has($claim)) {
+            if (! $this->has($claim)) {
                 return false;
             }
         }
@@ -66,36 +74,43 @@ class Collection extends IlluminateCollection
     }
 
     /**
-     * Get the claims as a key/val array.
+     * Get the claims as a plain key/value array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toPlainArray(): array
     {
-        return $this->map(function (Claim $claim) {
-            return $claim->getValue();
-        })->toArray();
+        return $this->map(fn (Claim $claim): mixed => $claim->getValue())->toArray();
     }
 
-    protected function getArrayableItems($items)
+    /**
+     * @param mixed $items
+     * @return array<string, Claim>
+     */
+    protected function getArrayableItems($items): array
     {
         return $this->sanitizeClaims($items);
     }
 
     /**
-     * Ensure that the given claims array is keyed by the claim name.
+     * Ensure that the claims array is keyed by the claim name.
      *
-     * @return array
+     * @param mixed $items
+     * @return array<string, Claim>
      */
-    private function sanitizeClaims($items)
+    private function sanitizeClaims(mixed $items): array
     {
-        $claims = [];
-        foreach ($items as $key => $value) {
-            if (!is_string($key) && $value instanceof Claim) {
-                $key = $value->getName();
-            }
+        if (! is_iterable($items)) {
+            return [];
+        }
 
-            $claims[$key] = $value;
+        $claims = [];
+
+        foreach ($items as $key => $value) {
+            if ($value instanceof Claim) {
+                $claimKey = is_string($key) ? $key : $value->getName();
+                $claims[$claimKey] = $value;
+            }
         }
 
         return $claims;

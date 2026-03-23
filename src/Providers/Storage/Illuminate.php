@@ -1,177 +1,80 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\Storage;
 
 use Illuminate\Contracts\Cache\Repository as CacheContract;
 use ArtTiger\JWTAuth\Contracts\Providers\Storage;
-use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
 
 class Illuminate implements Storage
 {
-    /**
-     * The cache repository contract.
-     *
-     * @var CacheContract
-     */
-    protected $cache;
+    protected CacheContract $cache;
 
-    /**
-     * The used cache tag.
-     *
-     * @var string
-     */
-    protected $tag = 'tymon.jwt';
+    protected string $tag = 'arttiger.jwt';
 
-    /**
-     * @var bool
-     */
-    protected $supportsTags;
+    protected ?bool $supportsTags = null;
 
-    /**
-     * @var string|null
-     */
-    protected $laravelVersion;
-
-    /**
-     * Constructor.
-     *
-     * @return void
-     */
     public function __construct(CacheContract $cache)
     {
         $this->cache = $cache;
     }
 
-    /**
-     * Add a new item into storage.
-     *
-     * @param string $key
-     * @param int    $minutes
-     *
-     * @return void
-     */
-    public function add($key, $value, $minutes)
+    public function add(string $key, mixed $value, int $minutes): void
     {
-        // If the laravel version is 5.8 or higher then convert minutes to seconds.
-        if (null !== $this->laravelVersion
-            && is_int($minutes)
-            && version_compare($this->laravelVersion, '5.8', '>=')
-        ) {
-            $minutes = $minutes * 60;
-        }
-
-        $this->cache()->put($key, $value, $minutes);
+        // Laravel 5.8+ uses seconds; since we require Laravel 12, always convert.
+        $this->cache()->put($key, $value, $minutes * 60);
     }
 
-    /**
-     * Add a new item into storage forever.
-     *
-     * @param string $key
-     *
-     * @return void
-     */
-    public function forever($key, $value)
+    public function forever(string $key, mixed $value): void
     {
         $this->cache()->forever($key, $value);
     }
 
-    /**
-     * Get an item from storage.
-     *
-     * @param string $key
-     */
-    public function get($key)
+    public function get(string $key): mixed
     {
         return $this->cache()->get($key);
     }
 
-    /**
-     * Remove an item from storage.
-     *
-     * @param string $key
-     *
-     * @return bool
-     */
-    public function destroy($key)
+    public function destroy(string $key): bool
     {
         return $this->cache()->forget($key);
     }
 
-    /**
-     * Remove all items associated with the tag.
-     *
-     * @return void
-     */
-    public function flush()
+    public function flush(): void
     {
-        $this->cache()->flush();
+        $cache = $this->cache();
+        if ($cache instanceof \Illuminate\Cache\Repository) {
+            $cache->flush();
+        }
     }
 
-    /**
-     * Return the cache instance with tags attached.
-     *
-     * @return CacheContract
-     */
-    protected function cache()
+    protected function cache(): CacheContract
     {
-        if (null === $this->supportsTags) {
+        if ($this->supportsTags === null) {
             $this->determineTagSupport();
         }
 
-        if ($this->supportsTags) {
+        if ($this->supportsTags === true && $this->cache instanceof \Illuminate\Cache\Repository) {
             return $this->cache->tags($this->tag);
         }
 
         return $this->cache;
     }
 
-    /**
-     * Set the laravel version.
-     */
-    public function setLaravelVersion($version)
+    protected function determineTagSupport(): void
     {
-        $this->laravelVersion = $version;
+        if (! ($this->cache instanceof \Illuminate\Cache\Repository)) {
+            $this->supportsTags = false;
 
-        return $this;
-    }
+            return;
+        }
 
-    /**
-     * Detect as best we can whether tags are supported with this repository & store,
-     * and save our result on the $supportsTags flag.
-     *
-     * @return void
-     */
-    protected function determineTagSupport()
-    {
-        // Laravel >= 5.1.28
-        if (method_exists($this->cache, 'tags') || $this->cache instanceof PsrCacheInterface) {
-            try {
-                // Attempt the repository tags command, which throws exceptions when unsupported
-                $this->cache->tags($this->tag);
-                $this->supportsTags = true;
-            } catch (\BadMethodCallException $ex) {
-                $this->supportsTags = false;
-            }
-        } else {
-            // Laravel <= 5.1.27
-            if (method_exists($this->cache, 'getStore')) {
-                // Check for the tags function directly on the store
-                $this->supportsTags = method_exists($this->cache->getStore(), 'tags');
-            } else {
-                // Must be using custom cache repository without getStore(), and all bets are off,
-                // or we are mocking the cache contract (in testing), which will not create a getStore method
-                $this->supportsTags = false;
-            }
+        try {
+            $this->cache->tags($this->tag);
+            $this->supportsTags = true;
+        } catch (\BadMethodCallException) {
+            $this->supportsTags = false;
         }
     }
 }

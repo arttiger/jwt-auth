@@ -1,63 +1,32 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\Auth;
 
-use Illuminate\Contracts\Auth\Guard as GuardContract;
+use Illuminate\Contracts\Auth\StatefulGuard as GuardContract;
 use ArtTiger\JWTAuth\Contracts\Providers\Auth;
 
 class Illuminate implements Auth
 {
-    /**
-     * The authentication guard.
-     *
-     * @var GuardContract
-     */
-    protected $auth;
+    protected GuardContract $auth;
 
-    /**
-     * Constructor.
-     *
-     * @return void
-     */
     public function __construct(GuardContract $auth)
     {
         $this->auth = $auth;
     }
 
-    /**
-     * Check a user's credentials.
-     *
-     * @return bool
-     */
-    public function byCredentials(array $credentials)
+    public function byCredentials(array $credentials): bool
     {
-        return $this->auth->once($credentials);
+        return (bool) $this->auth->once($credentials);
     }
 
-    /**
-     * Authenticate a user via the id.
-     *
-     * @return bool
-     */
-    public function byId($id)
+    public function byId(int|string $id): bool
     {
-        return $this->auth->onceUsingId($id);
+        return (bool) $this->auth->onceUsingId($id);
     }
 
-    /**
-     * Get the currently authenticated user.
-     */
-    public function user()
+    public function user(): mixed
     {
         return $this->auth->user();
     }

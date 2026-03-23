@@ -59,22 +59,22 @@
     },
     "autoload": {
         "psr-4": {
-            "Arttiger\\JWTAuth\\": "src/"
+            "ArtTiger\\JWTAuth\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Arttiger\\JWTAuth\\Test\\": "tests/"
+            "ArtTiger\\JWTAuth\\Test\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "aliases": {
-                "JWTAuth": "Arttiger\\JWTAuth\\Facades\\JWTAuth",
-                "JWTFactory": "Arttiger\\JWTAuth\\Facades\\JWTFactory"
+                "JWTAuth": "ArtTiger\\JWTAuth\\Facades\\JWTAuth",
+                "JWTFactory": "ArtTiger\\JWTAuth\\Facades\\JWTFactory"
             },
             "providers": [
-                "Arttiger\\JWTAuth\\Providers\\LaravelServiceProvider"
+                "ArtTiger\\JWTAuth\\Providers\\LaravelServiceProvider"
             ]
         }
     },

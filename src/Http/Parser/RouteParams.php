@@ -1,19 +1,13 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Parser;
 
-use Illuminate\Http\Request;
 use ArtTiger\JWTAuth\Contracts\Http\Parser as ParserContract;
+use ArtTiger\JWTAuth\Traits\KeyTrait;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 
 class RouteParams implements ParserContract
 {
@@ -21,18 +15,17 @@ class RouteParams implements ParserContract
 
     /**
      * Try to get the token from the route parameters.
-     *
-     * @return string|null
      */
-    public function parse(Request $request)
+    public function parse(Request $request): ?string
     {
         $route = $request->route();
 
-        // Route may not be an instance of Illuminate\Routing\Route
-        // (it's an array in Lumen <5.2) or not exist at all
-        // (if the request was never dispatched)
-        if (is_callable([$route, 'parameter'])) {
-            return $route->parameter($this->key);
+        if (! $route instanceof Route) {
+            return null;
         }
+
+        $value = $route->parameter($this->key);
+
+        return is_string($value) ? $value : null;
     }
 }

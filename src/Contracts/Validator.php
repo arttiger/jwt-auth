@@ -7,12 +7,16 @@ namespace ArtTiger\JWTAuth\Contracts;
 interface Validator
 {
     /**
-     * Perform some checks on the value.
+     * Perform validation and throw on failure.
+     *
+     * @param array<mixed> $value
      */
     public function check(array $value): void;
 
     /**
-     * Helper function to return a boolean.
+     * Return a boolean indicating whether the value is valid.
+     *
+     * @param array<mixed> $value
      */
     public function isValid(array $value): bool;
 }

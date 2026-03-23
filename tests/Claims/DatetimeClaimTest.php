@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test\Claims;
 
-use Carbon\Carbon;
-use DateInterval;
-use DateTime;
-use Mockery;
-use Mockery\LegacyMockInterface;
 use ArtTiger\JWTAuth\Claims\Collection;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
@@ -20,11 +15,17 @@ use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Payload;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use Carbon\Carbon;
+use DateInterval;
+use DateTime;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class DatetimeClaimTest extends AbstractTestCase
 {
-    protected LegacyMockInterface $validator;
+    /** @var PayloadValidator&MockObject */
+    protected PayloadValidator $validator;
 
+    /** @var array<string, \ArtTiger\JWTAuth\Abstracts\Claim> */
     protected array $claimsTimestamp;
 
     /**
@@ -34,11 +35,13 @@ class DatetimeClaimTest extends AbstractTestCase
     {
         parent::setUp();
 
-        $this->validator = Mockery::mock(PayloadValidator::class);
-        $this->validator->shouldReceive('setRefreshFlow->check');
+        $validator = $this->createMock(PayloadValidator::class);
+        $validator->method('setRefreshFlow')->willReturnSelf();
+        $validator->method('validateCollection')->willReturnSelf();
+        $this->validator = $validator;
 
         $this->claimsTimestamp = [
-            'sub' => new Subject(1),
+            'sub' => new Subject('1'),
             'iss' => new Issuer('http://example.com'),
             'exp' => new Expiration($this->testNowTimestamp + 3600),
             'nbf' => new NotBefore($this->testNowTimestamp),
@@ -60,7 +63,7 @@ class DatetimeClaimTest extends AbstractTestCase
         $this->assertInstanceOf(\DateTimeInterface::class, $testCarbon);
 
         $claimsDatetime = [
-            'sub' => new Subject(1),
+            'sub' => new Subject('1'),
             'iss' => new Issuer('http://example.com'),
             'exp' => new Expiration($testCarbonCopy->addHour()),
             'nbf' => new NotBefore($testCarbon),
@@ -77,13 +80,12 @@ class DatetimeClaimTest extends AbstractTestCase
     public function testItShouldHandleDatetimeClaims(): void
     {
         $testDateTime = DateTime::createFromFormat('U', (string) $this->testNowTimestamp);
-        $testDateTimeCopy = clone $testDateTime;
-
         $this->assertInstanceOf(DateTime::class, $testDateTime);
+        $testDateTimeCopy = clone $testDateTime;
         $this->assertInstanceOf(\DateTimeInterface::class, $testDateTime);
 
         $claimsDatetime = [
-            'sub' => new Subject(1),
+            'sub' => new Subject('1'),
             'iss' => new Issuer('http://example.com'),
             'exp' => new Expiration($testDateTimeCopy->modify('+3600 seconds')),
             'nbf' => new NotBefore($testDateTime),
@@ -105,7 +107,7 @@ class DatetimeClaimTest extends AbstractTestCase
         $this->assertInstanceOf(\DateTimeInterface::class, $testDateTimeImmutable);
 
         $claimsDatetime = [
-            'sub' => new Subject(1),
+            'sub' => new Subject('1'),
             'iss' => new Issuer('http://example.com'),
             'exp' => new Expiration($testDateTimeImmutable->modify('+3600 seconds')),
             'nbf' => new NotBefore($testDateTimeImmutable),
@@ -129,7 +131,7 @@ class DatetimeClaimTest extends AbstractTestCase
         $this->assertInstanceOf(DateInterval::class, $testDateInterval);
 
         $claimsDateInterval = [
-            'sub' => new Subject(1),
+            'sub' => new Subject('1'),
             'iss' => new Issuer('http://example.com'),
             'exp' => new Expiration($testDateInterval),
             'nbf' => new NotBefore($this->testNowTimestamp),

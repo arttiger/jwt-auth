@@ -1,100 +1,61 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Claims;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Support\Utils;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Factory
 {
-    /**
-     * The request.
-     *
-     * @var Request
-     */
-    protected $request;
+    protected Request $request;
+
+    protected ?int $ttl = 60;
+
+    protected int $leeway = 0;
 
     /**
-     * The TTL.
-     *
-     * @var int|null
+     * @var array<non-empty-string, class-string<Claim>>
      */
-    protected $ttl = 60;
-
-    /**
-     * Time leeway in seconds.
-     *
-     * @var int
-     */
-    protected $leeway = 0;
-
-    /**
-     * The classes map.
-     *
-     * @var array
-     */
-    private $classMap = [
+    private array $classMap = [
+        'iss' => Issuer::class,
+        'sub' => Subject::class,
         'aud' => Audience::class,
         'exp' => Expiration::class,
-        'iat' => IssuedAt::class,
-        'iss' => Issuer::class,
-        'jti' => JwtId::class,
         'nbf' => NotBefore::class,
-        'sub' => Subject::class,
+        'iat' => IssuedAt::class,
+        'jti' => JwtId::class,
     ];
 
-    /**
-     * Constructor.
-     *
-     * @return void
-     */
     public function __construct(Request $request)
     {
         $this->request = $request;
     }
 
     /**
-     * Get the instance of the claim when passing the name and value.
-     *
-     * @param string $name
-     *
-     * @return Claim
+     * Get a Claim instance by name and value.
      *
      * @throws InvalidClaimException
      */
-    public function get($name, $value)
+    public function get(string $name, mixed $value): Claim
     {
         if ($this->has($name)) {
             $claim = new $this->classMap[$name]($value);
 
-            return method_exists($claim, 'setLeeway') ?
-                $claim->setLeeway($this->leeway) :
-                $claim;
+            return $claim->setLeeway($this->leeway);
         }
 
         return new Custom($name, $value);
     }
 
     /**
-     * Check whether the claim exists.
-     *
-     * @param string $name
-     *
-     * @return bool
+     * Check whether the claim name is registered.
      */
-    public function has($name)
+    public function has(string $name): bool
     {
         return array_key_exists($name, $this->classMap);
     }
@@ -102,63 +63,34 @@ class Factory
     /**
      * Generate the initial value and return the Claim instance.
      *
-     * @param string $name
-     *
-     * @return Claim
-     *
      * @throws InvalidClaimException
      */
-    public function make($name)
+    public function make(string $name): Claim
     {
         return $this->get($name, $this->$name());
     }
 
-    /**
-     * Get the Issuer (iss) claim.
-     *
-     * @return string
-     */
-    public function iss()
+    public function iss(): string
     {
         return $this->request->url();
     }
 
-    /**
-     * Get the Issued At (iat) claim.
-     *
-     * @return int
-     */
-    public function iat()
+    public function iat(): int
     {
         return Utils::now()->getTimestamp();
     }
 
-    /**
-     * Get the Expiration (exp) claim.
-     *
-     * @return int
-     */
-    public function exp()
+    public function exp(): int
     {
-        return Utils::now()->addMinutes($this->ttl)->getTimestamp();
+        return Utils::now()->addMinutes($this->ttl ?? 60)->getTimestamp();
     }
 
-    /**
-     * Get the Not Before (nbf) claim.
-     *
-     * @return int
-     */
-    public function nbf()
+    public function nbf(): int
     {
         return Utils::now()->getTimestamp();
     }
 
-    /**
-     * Get the JWT Id (jti) claim.
-     *
-     * @return string
-     */
-    public function jti()
+    public function jti(): string
     {
         return Str::random();
     }
@@ -166,62 +98,36 @@ class Factory
     /**
      * Add a new claim mapping.
      *
-     * @param string $name
-     * @param string $classPath
-     *
-     * @return $this
+     * @param non-empty-string       $name
+     * @param class-string<Claim>    $classPath
      */
-    public function extend($name, $classPath)
+    public function extend(string $name, string $classPath): static
     {
         $this->classMap[$name] = $classPath;
 
         return $this;
     }
 
-    /**
-     * Set the request instance.
-     *
-     * @return $this
-     */
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): static
     {
         $this->request = $request;
 
         return $this;
     }
 
-    /**
-     * Set the token ttl (in minutes).
-     *
-     * @param int|null $ttl
-     *
-     * @return $this
-     */
-    public function setTTL($ttl)
+    public function setTTL(?int $ttl): static
     {
-        $this->ttl = $ttl ? (int) $ttl : $ttl;
+        $this->ttl = $ttl;
 
         return $this;
     }
 
-    /**
-     * Get the token ttl.
-     *
-     * @return int|null
-     */
-    public function getTTL()
+    public function getTTL(): ?int
     {
         return $this->ttl;
     }
 
-    /**
-     * Set the leeway in seconds.
-     *
-     * @param int $leeway
-     *
-     * @return $this
-     */
-    public function setLeeway($leeway)
+    public function setLeeway(int $leeway): static
     {
         $this->leeway = $leeway;
 

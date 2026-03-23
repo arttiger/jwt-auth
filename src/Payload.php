@@ -1,65 +1,52 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
+use ArrayAccess;
+use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Exceptions\PayloadException;
+use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use Countable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use ArtTiger\JWTAuth\Claims\Claim;
-use ArtTiger\JWTAuth\Claims\Collection;
-use ArtTiger\JWTAuth\Exceptions\PayloadException;
-use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use JsonSerializable;
 
-class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSerializable
+/**
+ * @implements ArrayAccess<string, mixed>
+ * @implements Arrayable<string, mixed>
+ */
+class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerializable
 {
-    /**
-     * The collection of claims.
-     *
-     * @var Collection
-     */
-    private $claims;
+    private Collection $claims;
 
     /**
      * Build the Payload.
-     *
-     * @param bool $refreshFlow
-     *
-     * @return void
      */
-    public function __construct(Collection $claims, PayloadValidator $validator, $refreshFlow = false)
+    public function __construct(Collection $claims, PayloadValidator $validator, bool $refreshFlow = false)
     {
-        $this->claims = $validator->setRefreshFlow($refreshFlow)->check($claims);
+        $validator->setRefreshFlow($refreshFlow)->validateCollection($claims);
+        $this->claims = $claims;
     }
 
     /**
-     * Get the array of claim instances.
-     *
-     * @return Collection
+     * Get the collection of claim instances.
      */
-    public function getClaims()
+    public function getClaims(): Collection
     {
         return $this->claims;
     }
 
     /**
-     * Checks if a payload matches some expected values.
+     * Check whether the payload matches the given key/value pairs.
      *
-     * @param bool $strict
-     *
-     * @return bool
+     * @param array<string, mixed> $values
      */
-    public function matches(array $values, $strict = false)
+    public function matches(array $values, bool $strict = false): bool
     {
         if (empty($values)) {
             return false;
@@ -68,7 +55,8 @@ class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSer
         $claims = $this->getClaims();
 
         foreach ($values as $key => $value) {
-            if (!$claims->has($key) || !$claims->get($key)->matches($value, $strict)) {
+            $claimObj = $claims->get($key);
+            if (! $claims->has($key) || null === $claimObj || ! $claimObj->matches($value, $strict)) {
                 return false;
             }
         }
@@ -77,84 +65,75 @@ class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSer
     }
 
     /**
-     * Checks if a payload strictly matches some expected values.
+     * Strictly match the payload against the given values.
      *
-     * @return bool
+     * @param array<string, mixed> $values
      */
-    public function matchesStrict(array $values)
+    public function matchesStrict(array $values): bool
     {
         return $this->matches($values, true);
     }
 
     /**
-     * Get the payload.
+     * Get one or more claim values. Returns all claims as array when $claim is null.
      */
-    public function get($claim = null)
+    public function get(mixed $claim = null): mixed
     {
         $claim = value($claim);
 
-        if (null !== $claim) {
+        if ($claim !== null) {
             if (is_array($claim)) {
                 return array_map([$this, 'get'], $claim);
             }
 
-            return Arr::get($this->toArray(), $claim);
+            if (is_string($claim) || is_int($claim)) {
+                return Arr::get($this->toArray(), $claim);
+            }
+
+            return null;
         }
 
         return $this->toArray();
     }
 
     /**
-     * Get the underlying Claim instance.
-     *
-     * @param string $claim
-     *
-     * @return Claim
+     * Get the underlying Claim instance by name.
      */
-    public function getInternal($claim)
+    public function getInternal(string $claim): ?Claim
     {
         return $this->claims->getByClaimName($claim);
     }
 
     /**
-     * Determine whether the payload has the claim (by instance).
-     *
-     * @return bool
+     * Determine whether the payload contains the given claim instance.
      */
-    public function has(Claim $claim)
+    public function has(Claim $claim): bool
     {
         return $this->claims->has($claim->getName());
     }
 
     /**
-     * Determine whether the payload has the claim (by key).
-     *
-     * @param string $claim
-     *
-     * @return bool
+     * Determine whether the payload has a claim by key name.
      */
-    public function hasKey($claim)
+    public function hasKey(string $claim): bool
     {
         return $this->offsetExists($claim);
     }
 
     /**
-     * Get the array of claims.
+     * Get the claims as a plain key/value array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->claims->toPlainArray();
     }
 
     /**
-     * Convert the object into something JSON serializable.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->toArray();
     }
@@ -162,74 +141,43 @@ class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSer
     /**
      * Get the payload as JSON.
      */
-    public function toJson($options = JSON_UNESCAPED_SLASHES)
+    public function toJson(mixed $options = JSON_UNESCAPED_SLASHES): string
     {
-        return json_encode($this->toArray(), $options);
+        return (string) json_encode($this->toArray(), (int) $options | JSON_THROW_ON_ERROR);
     }
 
-    /**
-     * Get the payload as a string.
-     *
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->toJson();
     }
 
-    /**
-     * Determine if an item exists at an offset.
-     *
-     * @return bool
-     */
-    #[\ReturnTypeWillChange]
-    public function offsetExists($key)
+    public function offsetExists(mixed $key): bool
     {
         return Arr::has($this->toArray(), $key);
     }
 
-    /**
-     * Get an item at a given offset.
-     */
-    #[\ReturnTypeWillChange]
-    public function offsetGet($key)
+    public function offsetGet(mixed $key): mixed
     {
         return Arr::get($this->toArray(), $key);
     }
 
     /**
-     * Don't allow changing the payload as it should be immutable.
-     *
      * @throws PayloadException
      */
-    #[\ReturnTypeWillChange]
-    public function offsetSet($key, $value)
+    public function offsetSet(mixed $key, mixed $value): void
     {
         throw new PayloadException('The payload is immutable');
     }
 
     /**
-     * Don't allow changing the payload as it should be immutable.
-     *
-     * @param string $key
-     *
-     * @return void
-     *
      * @throws PayloadException
      */
-    #[\ReturnTypeWillChange]
-    public function offsetUnset($key)
+    public function offsetUnset(mixed $key): void
     {
         throw new PayloadException('The payload is immutable');
     }
 
-    /**
-     * Count the number of claims.
-     *
-     * @return int
-     */
-    #[\ReturnTypeWillChange]
-    public function count()
+    public function count(): int
     {
         return count($this->toArray());
     }
@@ -237,20 +185,19 @@ class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSer
     /**
      * Invoke the Payload as a callable function.
      */
-    public function __invoke($claim = null)
+    public function __invoke(mixed $claim = null): mixed
     {
         return $this->get($claim);
     }
 
     /**
-     * Magically get a claim value.
+     * Magically get a claim value by method name (e.g. getExpiration()).
      *
-     * @param string $method
-     * @param array  $parameters
+     * @param array<mixed> $parameters
      *
      * @throws \BadMethodCallException
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, array $parameters): mixed
     {
         if (preg_match('/get(.+)\b/i', $method, $matches)) {
             foreach ($this->claims as $claim) {
@@ -260,6 +207,8 @@ class Payload implements \ArrayAccess, Arrayable, \Countable, Jsonable, \JsonSer
             }
         }
 
-        throw new \BadMethodCallException(sprintf('The claim [%s] does not exist on the payload.', Str::after($method, 'get')));
+        throw new \BadMethodCallException(
+            sprintf('The claim [%s] does not exist on the payload.', Str::after($method, 'get'))
+        );
     }
 }

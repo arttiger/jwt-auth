@@ -1,20 +1,14 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Claims;
 
+use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
+use ArtTiger\JWTAuth\Traits\DatetimeTrait;
 
 class IssuedAt extends Claim
 {
@@ -24,30 +18,46 @@ class IssuedAt extends Claim
 
     protected string $name = 'iat';
 
-    public function validateCreate($value)
+    public function getValue(): int
     {
-        $this->commonValidateCreate($value);
+        $value = parent::getValue();
 
-        if ($this->isFuture($value)) {
+        return is_int($value) ? $value : 0;
+    }
+
+    /**
+     * @throws InvalidClaimException
+     */
+    public function validateCreate(mixed $value): int
+    {
+        $timestamp = $this->commonValidateCreate($value);
+
+        if ($this->isFuture($timestamp)) {
             throw new InvalidClaimException($this);
         }
 
-        return $value;
+        return $timestamp;
     }
 
-    public function validatePayload()
+    /**
+     * @throws TokenInvalidException
+     */
+    public function validatePayload(): bool
     {
         if ($this->isFuture($this->getValue())) {
-            throw new TokenInvalidException('Issued At (iat) timestamp cannot be in the future');
+            throw new TokenInvalidException(message: 'Issued At (iat) timestamp cannot be in the future');
         }
 
         return true;
     }
 
-    public function validateRefresh($refreshTTL)
+    /**
+     * @throws TokenExpiredException
+     */
+    public function validateRefresh(int $refreshTTL): bool
     {
         if ($this->isPast($this->getValue() + $refreshTTL * 60)) {
-            throw new TokenExpiredException('Token has expired and can no longer be refreshed');
+            throw new TokenExpiredException(message: 'Token has expired and can no longer be refreshed');
         }
 
         return true;

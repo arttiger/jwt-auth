@@ -6,37 +6,29 @@ namespace ArtTiger\JWTAuth\Validators;
 
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
-class TokenValidator extends Validator
+/**
+ * Validates the structural integrity of a JWT string.
+ * Not part of the Validator hierarchy since it operates on strings, not arrays.
+ */
+class TokenValidator
 {
     /**
-     * Check the structure of the token.
+     * Validate the JWT string structure and return the token on success.
      *
      * @throws TokenInvalidException
      */
-    public function check(array $value): void
-    {
-        $this->validateStructure($value);
-    }
-
-    /**
-     * @param string $token
-     *
-     * @return string
-     *
-     * @throws TokenInvalidException
-     */
-    protected function validateStructure($token)
+    public function validate(string $token): string
     {
         $parts = explode('.', $token);
 
-        if (3 !== count($parts)) {
-            throw new TokenInvalidException(message: 'Wrong number of segments');
+        if (count($parts) !== 3) {
+            throw new TokenInvalidException('Wrong number of segments');
         }
 
         $parts = array_filter(array_map('trim', $parts));
 
-        if (3 !== count($parts) || implode('.', $parts) !== $token) {
-            throw new TokenInvalidException(message: 'Malformed token');
+        if (count($parts) !== 3 || implode('.', $parts) !== $token) {
+            throw new TokenInvalidException('Malformed token');
         }
 
         return $token;

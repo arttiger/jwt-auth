@@ -1,28 +1,22 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Contracts\Providers;
 
 interface JWT
 {
     /**
-     * @return string
+     * Encode the payload and return a token string.
+     *
+     * @param array<string, mixed> $payload
      */
-    public function encode(array $payload);
+    public function encode(array $payload): string;
 
     /**
-     * @param string $token
+     * Decode a token string and return the payload array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function decode($token);
+    public function decode(string $token): array;
 }

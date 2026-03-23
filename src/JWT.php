@@ -69,10 +69,10 @@ class JWT
      */
     public function refresh(bool $forceForever = false, bool $resetClaims = false): string
     {
-        $this->requireToken();
+        $token = $this->requireToken();
 
         return $this->manager->customClaims($this->getCustomClaims())
-            ->refresh($this->token, $forceForever, $resetClaims)
+            ->refresh($token, $forceForever, $resetClaims)
             ->get();
     }
 
@@ -81,38 +81,32 @@ class JWT
      */
     public function invalidate(bool $forceForever = false): static
     {
-        $this->requireToken();
+        $token = $this->requireToken();
 
-        $this->manager->invalidate($this->token, $forceForever);
+        $this->manager->invalidate($token, $forceForever);
 
         return $this;
     }
 
     /**
      * Alias to get the payload, and as a result checks that
-     * the token is valid i.e. not expired or blacklisted.
-     *
-     * @return Payload
+     * the token is valid i.e., not expired or blacklisted.
      *
      * @throws JWTException
      */
-    public function checkOrFail()
+    public function checkOrFail(): Payload
     {
         return $this->getPayload();
     }
 
     /**
      * Check that the token is valid.
-     *
-     * @param bool $getPayload
-     *
-     * @return Payload|bool
      */
-    public function check($getPayload = false)
+    public function check(bool $getPayload = false): bool|Payload
     {
         try {
             $payload = $this->checkOrFail();
-        } catch (JWTException $e) {
+        } catch (JWTException) {
             return false;
         }
 
@@ -124,7 +118,7 @@ class JWT
      */
     public function getToken(): ?Token
     {
-        if (null === $this->token) {
+        if ($this->token === null) {
             try {
                 $this->parseToken();
             } catch (JWTException) {
@@ -143,7 +137,7 @@ class JWT
     public function parseToken(): static
     {
         if (! $token = $this->parser->parseToken()) {
-            throw new JWTException(message: 'The token could not be parsed from the request');
+            throw new JWTException('The token could not be parsed from the request');
         }
 
         return $this->setToken($token);
@@ -154,9 +148,9 @@ class JWT
      */
     public function getPayload(): Payload
     {
-        $this->requireToken();
+        $token = $this->requireToken();
 
-        return $this->manager->decode($this->token);
+        return $this->manager->decode($token);
     }
 
     /**
@@ -186,49 +180,40 @@ class JWT
     /**
      * Build the claims array and return it.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    protected function getClaimsArray(JWTSubject $subject)
+    protected function getClaimsArray(JWTSubject $subject): array
     {
         return array_merge(
             $this->getClaimsForSubject($subject),
-            $subject->getJWTCustomClaims(), // custom claims from JWTSubject method
-            $this->customClaims // custom claims from inline setter
+            $subject->getJWTCustomClaims(),
+            $this->customClaims,
         );
     }
 
     /**
      * Get the claims associated with a given subject.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    protected function getClaimsForSubject(JWTSubject $subject)
+    protected function getClaimsForSubject(JWTSubject $subject): array
     {
-        return array_merge([
-            'sub' => $subject->getJWTIdentifier(),
-        ], $this->lockSubject ? ['prv' => $this->hashSubjectModel($subject)] : []);
+        // RFC 7519 §4.1.2: sub MUST be a string
+        return array_merge(
+            ['sub' => (string) $subject->getJWTIdentifier()],
+            $this->lockSubject ? ['prv' => $this->hashSubjectModel($subject)] : []
+        );
     }
 
     /**
      * Hash the subject model and return it.
-     *
-     * @param string|object $model
-     *
-     * @return string
      */
-    protected function hashSubjectModel($model)
+    protected function hashSubjectModel(string|object $model): string
     {
         return sha1(is_object($model) ? get_class($model) : $model);
     }
 
-    /**
-     * Check if the subject model matches the one saved in the token.
-     *
-     * @param string|object $model
-     *
-     * @return bool
-     */
-    public function checkSubjectModel($model)
+    public function checkSubjectModel(string|object $model): bool
     {
         if (($prv = $this->payload()->get('prv')) === null) {
             return true;
@@ -237,26 +222,14 @@ class JWT
         return $this->hashSubjectModel($model) === $prv;
     }
 
-    /**
-     * Set the token.
-     *
-     * @param Token|string $token
-     *
-     * @return $this
-     */
-    public function setToken($token)
+    public function setToken(Token|string $token): static
     {
         $this->token = $token instanceof Token ? $token : new Token($token);
 
         return $this;
     }
 
-    /**
-     * Unset the current token.
-     *
-     * @return $this
-     */
-    public function unsetToken()
+    public function unsetToken(): static
     {
         $this->token = null;
 
@@ -264,94 +237,60 @@ class JWT
     }
 
     /**
-     * Ensure that a token is available.
-     *
-     * @return void
-     *
      * @throws JWTException
      */
-    protected function requireToken()
+    protected function requireToken(): Token
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new JWTException('A token is required');
         }
+
+        return $this->token;
     }
 
-    /**
-     * Set the request instance.
-     *
-     * @return $this
-     */
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): static
     {
         $this->parser->setRequest($request);
 
         return $this;
     }
 
-    /**
-     * Set whether the subject should be "locked".
-     *
-     * @param bool $lock
-     *
-     * @return $this
-     */
-    public function lockSubject($lock)
+    public function lockSubject(bool $lock): static
     {
         $this->lockSubject = $lock;
 
         return $this;
     }
 
-    /**
-     * Get the Manager instance.
-     *
-     * @return Manager
-     */
-    public function manager()
+    public function manager(): Manager
     {
         return $this->manager;
     }
 
-    /**
-     * Get the Parser instance.
-     *
-     * @return Parser
-     */
-    public function parser()
+    public function parser(): Parser
     {
         return $this->parser;
     }
 
-    /**
-     * Get the Payload Factory.
-     *
-     * @return Factory
-     */
-    public function factory()
+    public function factory(): Factory
     {
         return $this->manager->getPayloadFactory();
     }
 
-    /**
-     * Get the Blacklist.
-     */
     public function blacklist(): Blacklist
     {
         return $this->manager->getBlacklist();
     }
 
     /**
-     * Magically call the JWT Manager.
-     *
-     * @param array $parameters
+     * @param array<mixed> $parameters
      *
      * @throws BadMethodCallException
      */
-    public function __call(string $method, array $parameters)
+    public function __call(string $method, array $parameters): mixed
     {
         if (method_exists($this->manager, $method)) {
-            return call_user_func_array([$this->manager, $method], $parameters);
+            return $this->manager->$method(...$parameters);
         }
 
         throw new BadMethodCallException("Method [$method] does not exist.");

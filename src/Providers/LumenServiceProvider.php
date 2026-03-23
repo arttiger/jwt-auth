@@ -1,32 +1,37 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers;
 
+use ArtTiger\JWTAuth\Abstracts\Providers\ServiceProvider;
 use ArtTiger\JWTAuth\Http\Parser\LumenRouteParams;
+use ArtTiger\JWTAuth\Http\Parser\Parser;
 
-class LumenServiceProvider extends AbstractServiceProvider
+class LumenServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
-        $this->app->configure('jwt');
+        // configure() is Lumen-specific — call dynamically to avoid PHPStan errors on Laravel interface
+        if (method_exists($this->app, 'configure')) {
+            $this->app->{'configure'}('jwt');
+        }
 
         $path = realpath(__DIR__.'/../../config/config.php');
-        $this->mergeConfigFrom($path, 'jwt');
 
-        $this->app->routeMiddleware($this->middlewareAliases);
+        if ($path !== false) {
+            $this->mergeConfigFrom($path, 'jwt');
+        }
+
+        if (method_exists($this->app, 'routeMiddleware')) {
+            $this->app->{'routeMiddleware'}($this->middlewareAliases);
+        }
 
         $this->extendAuthGuard();
 
-        $this->app['tymon.jwt.parser']->addParser(new LumenRouteParams());
+        $parser = $this->app->make('arttiger.jwt.parser');
+        if ($parser instanceof Parser) {
+            $parser->addParser(new LumenRouteParams());
+        }
     }
 }

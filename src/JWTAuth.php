@@ -1,35 +1,18 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
 use ArtTiger\JWTAuth\Contracts\JWTSubject;
 use ArtTiger\JWTAuth\Contracts\Providers\Auth;
+use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Http\Parser\Parser;
 
 class JWTAuth extends JWT
 {
-    /**
-     * The authentication provider.
-     *
-     * @var Auth
-     */
-    protected $auth;
+    protected Auth $auth;
 
-    /**
-     * Constructor.
-     *
-     * @return void
-     */
     public function __construct(Manager $manager, Auth $auth, Parser $parser)
     {
         parent::__construct($manager, $parser);
@@ -37,52 +20,48 @@ class JWTAuth extends JWT
     }
 
     /**
-     * Attempt to authenticate the user and return the token.
-     *
-     * @return false|string
+     * @param array<string, mixed> $credentials
      */
-    public function attempt(array $credentials)
+    public function attempt(array $credentials): false|string
     {
-        if (!$this->auth->byCredentials($credentials)) {
+        if (! $this->auth->byCredentials($credentials)) {
             return false;
         }
 
         return $this->fromUser($this->user());
     }
 
-    /**
-     * Authenticate a user via a token.
-     *
-     * @return JWTSubject|false
-     */
-    public function authenticate()
+    public function authenticate(): JWTSubject|false
     {
-        $id = $this->getPayload()->get('sub') ?: $this->getPayload()->get('id');
+        $id = $this->getPayload()->get('sub') ?? $this->getPayload()->get('id');
 
-        if (!$this->auth->byId($id)) {
+        if (! is_string($id) && ! is_int($id)) {
+            return false;
+        }
+
+        if (! $this->auth->byId($id)) {
             return false;
         }
 
         return $this->user();
     }
 
-    /**
-     * Alias for authenticate().
-     *
-     * @return JWTSubject|false
-     */
-    public function toUser()
+    public function toUser(): JWTSubject|false
     {
         return $this->authenticate();
     }
 
     /**
-     * Get the authenticated user.
-     *
-     * @return JWTSubject
+     * @throws JWTException
      */
-    public function user()
+    public function user(): JWTSubject
     {
-        return $this->auth->user();
+        $user = $this->auth->user();
+
+        if ($user instanceof JWTSubject) {
+            return $user;
+        }
+
+        throw new JWTException('Authenticated user does not implement JWTSubject');
     }
 }

@@ -43,11 +43,45 @@ class ClaimTest extends AbstractTestCase
 
     public function testItShouldGetTheObjectAsJson(): void
     {
-        $this->assertJsonStringEqualsJsonString(json_encode($this->claim), $this->claim->toJson());
+        $encoded = json_encode($this->claim);
+        $this->assertNotFalse($encoded);
+        $this->assertJsonStringEqualsJsonString($encoded, $this->claim->toJson());
     }
 
     public function testItShouldImplementArrayable(): void
     {
         $this->assertInstanceOf(Arrayable::class, $this->claim);
+    }
+
+    public function testItShouldGetTheClaimValue(): void
+    {
+        $this->assertSame($this->testNowTimestamp, $this->claim->getValue());
+    }
+
+    public function testItShouldGetAndSetTheClaimName(): void
+    {
+        $this->assertSame('exp', $this->claim->getName());
+
+        $this->claim->setName('custom_name');
+        $this->assertSame('custom_name', $this->claim->getName());
+    }
+
+    public function testItShouldMatchTheValueStrictly(): void
+    {
+        $this->assertTrue($this->claim->matches($this->testNowTimestamp));
+        $this->assertFalse($this->claim->matches($this->testNowTimestamp + 1));
+        $this->assertFalse($this->claim->matches((string) $this->testNowTimestamp));
+    }
+
+    public function testItShouldMatchTheValueLoosely(): void
+    {
+        $this->assertTrue($this->claim->matches($this->testNowTimestamp, false));
+        $this->assertTrue($this->claim->matches((string) $this->testNowTimestamp, false));
+        $this->assertFalse($this->claim->matches($this->testNowTimestamp + 1, false));
+    }
+
+    public function testItShouldJsonSerialize(): void
+    {
+        $this->assertSame(['exp' => $this->testNowTimestamp], $this->claim->jsonSerialize());
     }
 }

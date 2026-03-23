@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
@@ -20,22 +12,12 @@ use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
 class Namshi extends Provider implements JWT
 {
-    /**
-     * The JWS.
-     *
-     * @var JWS
-     */
-    protected $jws;
+    protected JWS $jws;
 
     /**
-     * Constructor.
-     *
-     * @param string $secret
-     * @param string $algo
-     *
-     * @return void
+     * @param array<string, mixed> $keys
      */
-    public function __construct(JWS $jws, $secret, $algo, array $keys)
+    public function __construct(JWS $jws, ?string $secret, string $algo, array $keys)
     {
         parent::__construct($secret, $algo, $keys);
 
@@ -43,16 +25,15 @@ class Namshi extends Provider implements JWT
     }
 
     /**
-     * Create a JSON Web Token.
-     *
-     * @return string
+     * @param array<string, mixed> $payload
      *
      * @throws JWTException
      */
-    public function encode(array $payload)
+    public function encode(array $payload): string
     {
         try {
-            $this->jws->setPayload($payload)->sign($this->getSigningKey(), $this->getPassphrase());
+            $this->jws->setPayload($payload);
+            $this->jws->sign($this->getSigningKey(), $this->getPassphrase());
 
             return (string) $this->jws->getTokenString();
         } catch (\Exception $e) {
@@ -61,34 +42,48 @@ class Namshi extends Provider implements JWT
     }
 
     /**
-     * Decode a JSON Web Token.
-     *
-     * @param string $token
-     *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws JWTException
      */
-    public function decode($token)
+    public function decode(string $token): array
     {
         try {
-            // Let's never allow insecure tokens
             $jws = $this->jws->load($token, false);
         } catch (\InvalidArgumentException $e) {
             throw new TokenInvalidException('Could not decode token: '.$e->getMessage(), $e->getCode(), $e);
         }
 
-        if (!$jws->verify($this->getVerificationKey(), $this->getAlgo())) {
+        if (! $jws->verify($this->getVerificationKey(), $this->getAlgo())) {
             throw new TokenInvalidException('Token Signature could not be verified.');
         }
 
-        return (array) $jws->getPayload();
+        $raw = $jws->getPayload();
+
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($raw as $k => $v) {
+            if (is_string($k)) {
+                $result[$k] = $v;
+            }
+        }
+
+        return $result;
     }
 
-    protected function isAsymmetric()
+    protected function isAsymmetric(): bool
     {
+        $className = sprintf('Namshi\\JOSE\\Signer\\OpenSSL\\%s', $this->getAlgo());
+
+        if (! class_exists($className)) {
+            throw new JWTException('The given algorithm could not be found');
+        }
+
         try {
-            return (new \ReflectionClass(sprintf('Namshi\\JOSE\\Signer\\OpenSSL\\%s', $this->getAlgo())))->isSubclassOf(PublicKey::class);
+            return (new \ReflectionClass($className))->isSubclassOf(PublicKey::class);
         } catch (\ReflectionException $e) {
             throw new JWTException('The given algorithm could not be found', $e->getCode(), $e);
         }

@@ -43,6 +43,8 @@ class Manager
 
     /**
      * the persistent claims.
+     *
+     * @var string[]
      */
     protected array $persistentClaims = [];
 
@@ -68,7 +70,7 @@ class Manager
      */
     public function encode(Payload $payload): Token
     {
-        $token = $this->provider->encode($payload->get());
+        $token = $this->provider->encode($payload->toArray());
 
         return new Token($token);
     }
@@ -130,16 +132,17 @@ class Manager
             throw new JWTException(message: 'You must have the blacklist enabled to invalidate a token.');
         }
 
-        return call_user_func(
-            [$this->blacklist, $forceForever ? 'addForever' : 'add'],
-            $this->decode($token, checkBlacklist: false)
-        );
+        $decoded = $this->decode($token, checkBlacklist: false);
+
+        return $forceForever
+            ? $this->blacklist->addForever($decoded)
+            : $this->blacklist->add($decoded);
     }
 
     /**
      * Build the claims to go into the refreshed token.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     protected function buildRefreshClaims(Payload $payload): array
     {
@@ -214,6 +217,9 @@ class Manager
 
     /**
      * Set the claims to be persisted when refreshing a token.
+     */
+    /**
+     * @param string[] $claims
      */
     public function setPersistentClaims(array $claims): static
     {

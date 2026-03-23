@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
-use ArtTiger\JWTAuth\Claims\Claim;
+use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Claims\Collection;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
 use ArtTiger\JWTAuth\Support\CustomClaims;
 use ArtTiger\JWTAuth\Support\RefreshFlow;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use Illuminate\Support\Collection as BaseCollection;
 
 class Factory
 {
@@ -40,20 +41,17 @@ class Factory
     ];
 
     /**
-     * The claims collection.
-     */
-    protected Collection $claims;
-
-    /**
-     * Constructor.
+     * Intermediate staging collection (holds mixed values before resolving to Claims).
      *
-     * @return void
+     * @var BaseCollection<string, mixed>
      */
+    protected BaseCollection $claims;
+
     public function __construct(ClaimFactory $claimFactory, PayloadValidator $validator)
     {
         $this->claimFactory = $claimFactory;
         $this->validator = $validator;
-        $this->claims = new Collection();
+        $this->claims = new BaseCollection();
     }
 
     /**
@@ -73,13 +71,15 @@ class Factory
      */
     public function emptyClaims(): static
     {
-        $this->claims = new Collection();
+        $this->claims = new BaseCollection();
 
         return $this;
     }
 
     /**
      * Add an array of claims to the Payload.
+     *
+     * @param array<string, mixed> $claims
      */
     protected function addClaims(array $claims): static
     {
@@ -92,12 +92,8 @@ class Factory
 
     /**
      * Add a claim to the Payload.
-     *
-     * @param string $name
-     *
-     * @return $this
      */
-    protected function addClaim($name, $value): static
+    protected function addClaim(string $name, mixed $value): static
     {
         $this->claims->put($name, $value);
 
@@ -106,14 +102,16 @@ class Factory
 
     /**
      * Build the default claims.
-     *
-     * @return $this
      */
-    protected function buildClaims()
+    protected function buildClaims(): static
     {
-        // remove the exp claim if it exists and the ttl is null
-        if (null === $this->claimFactory->getTTL() && $key = array_search('exp', $this->defaultClaims)) {
-            unset($this->defaultClaims[$key]);
+        // Remove exp claim when TTL is null (non-expiring tokens)
+        if ($this->claimFactory->getTTL() === null) {
+            $expKey = array_search('exp', $this->defaultClaims, true);
+
+            if ($expKey !== false) {
+                unset($this->defaultClaims[$expKey]);
+            }
         }
 
         // add the default claims
@@ -125,90 +123,63 @@ class Factory
         return $this->addClaims($this->getCustomClaims());
     }
 
-    /**
-     * Build out the Claim DTO's.
-     *
-     * @return Collection
-     */
-    protected function resolveClaims()
+    protected function resolveClaims(): Collection
     {
-        return $this->claims->map(function ($value, $name) {
-            return $value instanceof Claim ? $value : $this->claimFactory->get($name, $value);
-        });
+        $items = [];
+
+        foreach ($this->claims as $name => $value) {
+            $items[$name] = $value instanceof Claim
+                ? $value
+                : $this->claimFactory->get($name, $value);
+        }
+
+        return new Collection($items);
     }
 
-    /**
-     * Build and get the Claims Collection.
-     *
-     * @return Collection
-     */
-    public function buildClaimsCollection()
+    public function buildClaimsCollection(): Collection
     {
         return $this->buildClaims()->resolveClaims();
     }
 
-    /**
-     * Get a Payload instance with a claims collection.
-     *
-     * @return Payload
-     */
-    public function withClaims(Collection $claims)
+    public function withClaims(Collection $claims): Payload
     {
         return new Payload($claims, $this->validator, $this->refreshFlow);
     }
 
     /**
-     * Set the default claims to be added to the Payload.
-     *
-     * @return $this
+     * @param string[] $claims
      */
-    public function setDefaultClaims(array $claims)
+    public function setDefaultClaims(array $claims): static
     {
         $this->defaultClaims = $claims;
 
         return $this;
     }
 
-    /**
-     * Helper to set the ttl.
-     *
-     * @param int|null $ttl
-     *
-     * @return $this
-     */
-    public function setTTL($ttl)
+    public function setTTL(?int $ttl): static
     {
         $this->claimFactory->setTTL($ttl);
 
         return $this;
     }
 
-    /**
-     * Helper to get the ttl.
-     *
-     * @return int|null
-     */
-    public function getTTL()
+    public function getTTL(): ?int
     {
         return $this->claimFactory->getTTL();
     }
 
     /**
-     * Get the default claims.
-     *
-     * @return array
+     * @return string[]
      */
-    public function getDefaultClaims()
+    public function getDefaultClaims(): array
     {
         return $this->defaultClaims;
     }
 
     /**
      * Get the PayloadValidator instance.
-     *
-     * @return PayloadValidator
      */
-    public function validator()
+    public function validator(): PayloadValidator
     {
         return $this->validator;
     }
@@ -216,12 +187,9 @@ class Factory
     /**
      * Magically add a claim.
      *
-     * @param string $method
-     * @param array  $parameters
-     *
-     * @return $this
+     * @param array<mixed> $parameters
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, array $parameters): static
     {
         $this->addClaim($method, $parameters[0]);
 

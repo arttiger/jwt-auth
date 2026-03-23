@@ -1,84 +1,81 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Console;
 
+use ArtTiger\JWTAuth\Traits\EnvHelperTrait;
 use Illuminate\Console\Command;
 
 class JWTGenerateCertCommand extends Command
 {
     use EnvHelperTrait;
+
     /**
-     * The name and signature of the console command.
-     *
      * @var string
      */
-    protected $signature = 'jwt:generate-certs 
-        {--force : Override certificates if existing} 
-        {--algo= : Algorithm (rsa/ec)} 
-        {--bits= : RSA-Key length (1024,2048,4096,8192} 
-        {--sha= : SHA-variant (1,224,256,384,512)} 
-        {--dir= : Directory where the certificates should be placed} 
+    protected $signature = 'jwt:generate-certs
+        {--force : Override certificates if existing}
+        {--algo= : Algorithm (rsa/ec)}
+        {--bits= : RSA-Key length (1024,2048,4096,8192}
+        {--sha= : SHA-variant (1,224,256,384,512)}
+        {--dir= : Directory where the certificates should be placed}
         {--curve= : EC-Curvename (e.g. secp384r1, prime256v1 )}
         {--passphrase= : Passphrase}
         {--ask-passphrase : Enter passphrase instead passing as argument}';
 
     /**
-     * The console command description.
-     *
      * @var string
      */
     protected $description = 'Generates a new cert pair';
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle()
+    public function handle(): int
     {
-        $force = $this->option('force');
-        $directory = $this->option('dir') ? $this->option('dir') : 'storage/certs';
-        $algo = $this->option('algo') ? $this->option('algo') : 'rsa';
-        $bits = $this->option('bits') ? intval($this->option('bits')) : 4096;
-        $shaVariant = $this->option('sha') ? intval($this->option('sha')) : 512;
-        $curve = $this->option('curve') ? $this->option('curve') : 'prime256v1';
+        $force = (bool) $this->option('force');
+
+        $dirOption = $this->option('dir');
+        $directory = is_string($dirOption) && $dirOption !== '' ? $dirOption : 'storage/certs';
+
+        $algoOption = $this->option('algo');
+        $algo = is_string($algoOption) && $algoOption !== '' ? $algoOption : 'rsa';
+
+        $bitsOption = $this->option('bits');
+        $bits = is_numeric($bitsOption) ? (int) $bitsOption : 4096;
+
+        $shaOption = $this->option('sha');
+        $shaVariant = is_numeric($shaOption) ? (int) $shaOption : 512;
+
+        $curveOption = $this->option('curve');
+        $curve = is_string($curveOption) && $curveOption !== '' ? $curveOption : 'prime256v1';
 
         if ($this->option('ask-passphrase')) {
-            $passphrase = $this->secret('Passphrase');
+            $secretInput = $this->secret('Passphrase');
+            $passphrase = is_string($secretInput) ? $secretInput : null;
         } else {
-            $passphrase = $this->option('passphrase') ? $this->option('passphrase') : null;
+            $passphraseOption = $this->option('passphrase');
+            $passphrase = is_string($passphraseOption) ? $passphraseOption : null;
         }
 
         $filenamePublic = sprintf('%s/jwt-%s-%d-public.pem', $directory, $algo, $bits);
         $filenamePrivate = sprintf('%s/jwt-%s-%d-private.pem', $directory, $algo, $bits);
 
-        if (true === file_exists($filenamePrivate)) {
+        if (file_exists($filenamePrivate)) {
             $this->warn('Private cert already exists');
 
-            if (!$force) {
+            if (! $force) {
                 $this->warn('Aborting');
 
-                return;
+                return self::FAILURE;
             }
         }
 
-        if (true === file_exists($filenamePublic)) {
+        if (file_exists($filenamePublic)) {
             $this->warn('Public cert already exists');
 
-            if (!$force) {
+            if (! $force) {
                 $this->warn('Aborting');
 
-                return;
+                return self::FAILURE;
             }
         }
 
@@ -96,10 +93,9 @@ class JWTGenerateCertCommand extends Command
             default:
                 $this->error('Unknown algorithm');
 
-                return -1;
+                return self::FAILURE;
         }
 
-        // Create the private and public key
         $res = openssl_pkey_new([
             'digest_alg' => sprintf('sha%d', $shaVariant),
             'private_key_bits' => $bits,
@@ -107,26 +103,42 @@ class JWTGenerateCertCommand extends Command
             'curve_name' => $curve,
         ]);
 
-        // Extract the private key from $res to $privKey
+        if ($res === false) {
+            $this->error('Failed to generate key pair: '.openssl_error_string());
+
+            return self::FAILURE;
+        }
+
+        $privKey = '';
         openssl_pkey_export($res, $privKey, $passphrase);
 
-        // Extract the public key from $res to $pubKey
-        $pubKey = openssl_pkey_get_details($res);
-        $pubKey = $pubKey['key'];
+        $details = openssl_pkey_get_details($res);
+        if ($details === false) {
+            $this->error('Failed to extract public key details.');
 
-        // save certificates to disk
-        if (false === is_dir($directory)) {
+            return self::FAILURE;
+        }
+
+        $rawKey = $details['key'];
+        if (! is_string($rawKey)) {
+            $this->error('Failed to extract public key string.');
+
+            return self::FAILURE;
+        }
+
+        $pubKey = $rawKey;
+
+        if (! is_dir($directory)) {
             mkdir($directory, 0777, true);
         }
 
         file_put_contents($filenamePrivate, $privKey);
         file_put_contents($filenamePublic, $pubKey);
 
-        // Updated .env-file
-        if (!$this->envFileExists()) {
+        if (! $this->envFileExists()) {
             $this->error('.env file missing');
 
-            return -1;
+            return self::FAILURE;
         }
 
         $this->updateEnvEntry('JWT_ALGO', $algoIdentifier);
@@ -134,6 +146,6 @@ class JWTGenerateCertCommand extends Command
         $this->updateEnvEntry('JWT_PUBLIC_KEY', sprintf('file://../%s', $filenamePublic));
         $this->updateEnvEntry('JWT_PASSPHRASE', $passphrase ?? '');
 
-        return 0;
+        return self::SUCCESS;
     }
 }

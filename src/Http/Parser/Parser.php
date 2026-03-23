@@ -1,23 +1,18 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Parser;
 
 use Illuminate\Http\Request;
+use ArtTiger\JWTAuth\Contracts\Http\Parser as ParserContract;
 
 class Parser
 {
     /**
-     * The chain.
+     * The chain of parsers.
+     *
+     * @var ParserContract[]
      */
     private array $chain;
 
@@ -29,7 +24,7 @@ class Parser
     /**
      * Constructor.
      *
-     * @return void
+     * @param ParserContract[] $chain
      */
     public function __construct(Request $request, array $chain = [])
     {
@@ -40,9 +35,9 @@ class Parser
     /**
      * Get the parser chain.
      *
-     * @return array
+     * @return ParserContract[]
      */
-    public function getChain()
+    public function getChain(): array
     {
         return $this->chain;
     }
@@ -50,11 +45,9 @@ class Parser
     /**
      * Add a new parser to the chain.
      *
-     * @param array|\ArtTiger\JWTAuth\Contracts\Http\Parser $parsers
-     *
-     * @return $this
+     * @param ParserContract|ParserContract[] $parsers
      */
-    public function addParser($parsers)
+    public function addParser(ParserContract|array $parsers): static
     {
         $this->chain = array_merge($this->chain, is_array($parsers) ? $parsers : [$parsers]);
 
@@ -64,9 +57,9 @@ class Parser
     /**
      * Set the order of the parser chain.
      *
-     * @return $this
+     * @param ParserContract[] $chain
      */
-    public function setChain(array $chain)
+    public function setChain(array $chain): static
     {
         $this->chain = $chain;
 
@@ -76,44 +69,40 @@ class Parser
     /**
      * Alias for setting the order of the chain.
      *
-     * @return $this
+     * @param ParserContract[] $chain
      */
-    public function setChainOrder(array $chain)
+    public function setChainOrder(array $chain): static
     {
         return $this->setChain($chain);
     }
 
     /**
      * Iterate through the parsers and attempt to retrieve
-     * a value, otherwise return null.
-     *
-     * @return string|null
+     *  a value, otherwise return null.
      */
-    public function parseToken()
+    public function parseToken(): ?string
     {
         foreach ($this->chain as $parser) {
             if ($response = $parser->parse($this->request)) {
                 return $response;
             }
         }
+
+        return null;
     }
 
     /**
      * Check whether a token exists in the chain.
-     *
-     * @return bool
      */
-    public function hasToken()
+    public function hasToken(): bool
     {
-        return null !== $this->parseToken();
+        return $this->parseToken() !== null;
     }
 
     /**
      * Set the request instance.
-     *
-     * @return $this
      */
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): static
     {
         $this->request = $request;
 

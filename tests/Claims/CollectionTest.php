@@ -25,7 +25,7 @@ class CollectionTest extends AbstractTestCase
     private function getCollection(): Collection
     {
         $claims = [
-            new Subject(1),
+            new Subject('1'),
             new Issuer('http://example.com'),
             new Expiration($this->testNowTimestamp + 3600),
             new NotBefore($this->testNowTimestamp),
@@ -54,5 +54,43 @@ class CollectionTest extends AbstractTestCase
 
         $this->assertInstanceOf(Expiration::class, $collection->getByClaimName('exp'));
         $this->assertInstanceOf(Subject::class, $collection->getByClaimName('sub'));
+    }
+
+    public function testItShouldReturnNullWhenClaimNotFoundByName(): void
+    {
+        $collection = $this->getCollection();
+
+        $this->assertNull($collection->getByClaimName('nonexistent'));
+    }
+
+    public function testItShouldGetAPlainArray(): void
+    {
+        $collection = $this->getCollection();
+        $plain = $collection->toPlainArray();
+
+        $this->assertSame('1', $plain['sub']);
+        $this->assertSame('http://example.com', $plain['iss']);
+        $this->assertSame('foo', $plain['jti']);
+        $this->assertSame($this->testNowTimestamp + 3600, $plain['exp']);
+    }
+
+    public function testItShouldAcceptStringKeyedClaims(): void
+    {
+        $claims = [
+            'sub' => new Subject('1'),
+            'iss' => new Issuer('http://example.com'),
+        ];
+
+        $collection = new Collection($claims);
+        $this->assertSame(['sub', 'iss'], array_keys($collection->toArray()));
+    }
+
+    public function testItShouldValidatePayloadAndReturnSelf(): void
+    {
+        $collection = $this->getCollection();
+
+        $result = $collection->validate('payload');
+
+        $this->assertSame($collection, $result);
     }
 }

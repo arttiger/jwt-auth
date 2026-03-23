@@ -9,31 +9,18 @@ use ArtTiger\JWTAuth\Support\Utils;
 
 class Blacklist
 {
-    /**
-     * The storage.
-     */
+    /** The storage. */
     protected Storage $storage;
 
-    /**
-     * The grace period when a token is blacklisted. In seconds.
-     */
+    /** Grace period when a token is blacklisted, in seconds. */
     protected int $gracePeriod = 0;
 
-    /**
-     * Number of minutes from issue date in which a JWT can be refreshed.
-     */
+    /** Number of minutes from issue date in which a JWT can be refreshed. */
     protected int $refreshTTL = 20160;
 
-    /**
-     * The unique key held within the blacklist.
-     */
+    /** The unique key held within the blacklist (defaults to jti claim). */
     protected string $key = 'jti';
 
-    /**
-     * Constructor.
-     *
-     * @return void
-     */
     public function __construct(Storage $storage)
     {
         $this->storage = $storage;
@@ -44,19 +31,19 @@ class Blacklist
      */
     public function add(Payload $payload): bool
     {
-        // if there is no exp claim then add the jwt to
-        // the blacklist indefinitely
-        if (!$payload->hasKey('exp')) {
+        // No exp claim → add indefinitely
+        if (! $payload->hasKey('exp')) {
             return $this->addForever($payload);
         }
 
-        // if we have already added this token to the blacklist
-        if (! empty($this->storage->get($this->getKey($payload)))) {
+        $blacklistKey = $this->getKey($payload);
+
+        if (! empty($this->storage->get($blacklistKey))) {
             return true;
         }
 
         $this->storage->add(
-            $this->getKey($payload),
+            $blacklistKey,
             ['valid_until' => $this->getGraceTimestamp()],
             $this->getMinutesUntilExpired($payload)
         );
@@ -69,20 +56,26 @@ class Blacklist
      */
     protected function getMinutesUntilExpired(Payload $payload): int
     {
-        $exp = Utils::timestamp($payload['exp']);
-        $iat = Utils::timestamp($payload['iat']);
+        $expValue = $payload->get('exp');
+        $iatValue = $payload->get('iat');
 
-        // get the latter of the two expiration dates and find
-        // the number of minutes until the expiration date,
-        // plus 1 minute to avoid overlap
-        $intermediateResult = $exp->max($iat->addMinutes($this->refreshTTL))->addMinute();
-
-        // Handle Carbon 2 vs 3 deprecation of "Real" diff functions, see https://github.com/PHP-Open-Source-Saver/jwt-auth/issues/260
-        if (method_exists($intermediateResult, 'diffInRealMinutes')) {
-            return (int) round($intermediateResult->diffInRealMinutes(null, true));
+        if (! is_int($expValue) || ! is_int($iatValue)) {
+            return $this->refreshTTL + 1;
         }
 
-        return (int) round($intermediateResult->diffInMinutes(null, true));
+        $exp = Utils::timestamp($expValue);
+        $iat = Utils::timestamp($iatValue);
+
+        $intermediate = $exp->max($iat->addMinutes($this->refreshTTL))->addMinute();
+
+        // Handle Carbon 2 vs Carbon 3 diff API
+        if (method_exists($intermediate, 'diffInRealMinutes')) {
+            $diff = $intermediate->diffInRealMinutes(null, true);
+        } else {
+            $diff = $intermediate->diffInMinutes(null, true);
+        }
+
+        return (int) round(is_float($diff) || is_int($diff) ? $diff : 0);
     }
 
     /**
@@ -100,15 +93,20 @@ class Blacklist
      */
     public function has(Payload $payload): bool
     {
-        $val = $this->storage->get($this->getKey($payload));
+        $value = $this->storage->get($this->getKey($payload));
 
         // exit early if the token was blacklisted forever,
-        if ('forever' === $val) {
+        if ($value === 'forever') {
             return true;
         }
 
-        // check whether the expiry + grace has past
-        return !empty($val) && !Utils::isFuture($val['valid_until']);
+        if (! is_array($value) || ! isset($value['valid_until'])) {
+            return false;
+        }
+
+        $validUntil = $value['valid_until'];
+
+        return is_int($validUntil) && ! Utils::isFuture($validUntil);
     }
 
     /**
@@ -159,21 +157,19 @@ class Blacklist
     /**
      * Get the unique key held within the blacklist.
      */
-    public function getKey(Payload $payload)
+    public function getKey(Payload $payload): string
     {
-        return $payload($this->key);
+        $value = $payload($this->key);
+
+        return is_string($value) ? $value : '';
     }
 
     /**
      * Set the unique key held within the blacklist.
-     *
-     * @param string $key
-     *
-     * @return $this
      */
     public function setKey(string $key): static
     {
-        $this->key = value($key);
+        $this->key = $key;
 
         return $this;
     }

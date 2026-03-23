@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Parser;
 
@@ -19,46 +11,39 @@ class AuthHeaders implements ParserContract
 {
     /**
      * The header name.
-     *
-     * @var string
-     */
-    protected $header = 'authorization';
+    */
+    protected string $header = 'authorization';
 
     /**
      * The header prefix.
-     *
-     * @var string
      */
-    protected $prefix = 'bearer';
+    protected string $prefix = 'bearer';
 
     /**
      * Attempt to parse the token from some other possible headers.
-     *
-     * @return string|null
      */
-    protected function fromAltHeaders(Request $request)
+    protected function fromAltHeaders(Request $request): ?string
     {
-        return $request->server->get('HTTP_AUTHORIZATION') ?: $request->server->get('REDIRECT_HTTP_AUTHORIZATION');
+        $value = $request->server->get('HTTP_AUTHORIZATION') ?: $request->server->get('REDIRECT_HTTP_AUTHORIZATION');
+
+        return is_string($value) ? $value : null;
     }
 
     /**
      * Try to parse the token from the request header.
-     *
-     * @return string|null
      */
-    public function parse(Request $request)
+    public function parse(Request $request): ?string
     {
         $header = $request->headers->get($this->header) ?: $this->fromAltHeaders($request);
 
-        if (null !== $header) {
+        if ($header !== null) {
             $position = strripos($header, $this->prefix);
 
-            if (false !== $position) {
+            if ($position !== false) {
                 $header = substr($header, $position + strlen($this->prefix));
+                $token = str_contains($header, ',') ? strstr($header, ',', before_needle: true) : $header;
 
-                return trim(
-                    false !== strpos($header, ',') ? strstr($header, ',', true) : $header
-                );
+                return $token !== false ? trim($token) : null;
             }
         }
 
@@ -67,12 +52,8 @@ class AuthHeaders implements ParserContract
 
     /**
      * Set the header name.
-     *
-     * @param string $headerName
-     *
-     * @return $this
      */
-    public function setHeaderName($headerName)
+    public function setHeaderName(string $headerName): static
     {
         $this->header = $headerName;
 
@@ -81,12 +62,8 @@ class AuthHeaders implements ParserContract
 
     /**
      * Set the header prefix.
-     *
-     * @param string $headerPrefix
-     *
-     * @return $this
      */
-    public function setHeaderPrefix($headerPrefix)
+    public function setHeaderPrefix(string $headerPrefix): static
     {
         $this->prefix = $headerPrefix;
 

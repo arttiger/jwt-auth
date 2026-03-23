@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
@@ -28,6 +20,7 @@ use Illuminate\Support\Traits\Macroable;
 use ArtTiger\JWTAuth\Contracts\JWTSubject;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Exceptions\UserNotDefinedException;
+use ArtTiger\JWTAuth\Payload;
 
 /**
  * @mixin JWT
@@ -44,7 +37,7 @@ class JWTGuard implements Guard
     /**
      * The user we last attempted to retrieve.
      */
-    protected Authenticatable $lastAttempted;
+    protected ?Authenticatable $lastAttempted = null;
 
     /**
      * The JWT instance.
@@ -66,11 +59,6 @@ class JWTGuard implements Guard
      */
     protected string $name = 'arttiger.jwt';
 
-    /**
-     * Instantiate the class.
-     *
-     * @return void
-     */
     public function __construct(JWT $jwt, UserProvider $provider, Request $request, Dispatcher $eventDispatcher)
     {
         $this->jwt = $jwt;
@@ -79,9 +67,6 @@ class JWTGuard implements Guard
         $this->events = $eventDispatcher;
     }
 
-    /**
-     * Get the currently authenticated user.
-     */
     public function user(): ?Authenticatable
     {
         if (null !== $this->user) {
@@ -89,7 +74,7 @@ class JWTGuard implements Guard
         }
 
         if (
-            ($payload = $this->jwt->check(true))
+            ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
             && $this->jwt->setRequest($this->request)->getToken()
         ) {
@@ -99,37 +84,33 @@ class JWTGuard implements Guard
         return null;
     }
 
-    /**
-     * Get the ID for the currently authenticated user.
-     */
     public function getUserId(): int|string|null
     {
         if (null !== $this->user) {
-            return $this->user->getAuthIdentifier();
+            $id = $this->user->getAuthIdentifier();
+
+            return is_string($id) || is_int($id) ? $id : null;
         }
 
         if (
-            ($payload = $this->jwt->check(true))
+            ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
             && $this->jwt->setRequest($this->request)->getToken()
         ) {
-            return $payload['sub'];
+            $sub = $payload->get('sub');
+
+            return is_string($sub) || is_int($sub) ? $sub : null;
         }
 
         return null;
     }
 
-    /**
-     * Get the ID for the currently authenticated user.
-     */
     public function id(): int|string|null
     {
         return $this->getUserId();
     }
 
     /**
-     * Get the currently authenticated user or throws an exception.
-     *
      * @throws UserNotDefinedException
      */
     public function userOrFail(): Authenticatable
@@ -142,9 +123,7 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Validate a user's credentials.
-     *
-     * @return bool
+     * @param array<string, mixed> $credentials
      */
     public function validate(array $credentials = []): bool
     {
@@ -152,11 +131,7 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Attempt to authenticate the user using the given credentials and return the token.
-     *
-     * @param bool $login
-     *
-     * @return bool|string
+     * @param array<string, mixed> $credentials
      */
     public function attempt(array $credentials = [], bool $login = true): bool|string
     {
@@ -165,7 +140,11 @@ class JWTGuard implements Guard
         $this->fireAttemptEvent($credentials);
 
         if ($this->hasValidCredentials($user, $credentials)) {
-            return $login ? $this->login($user) : true;
+            if ($login && $user instanceof JWTSubject && $user instanceof Authenticatable) {
+                return $this->login($user);
+            }
+
+            return true;
         }
 
         $this->fireFailedEvent($user, $credentials);
@@ -173,12 +152,7 @@ class JWTGuard implements Guard
         return false;
     }
 
-    /**
-     * Create a token for a user.
-     *
-     * @return string
-     */
-    public function login(JWTSubject $user): string
+    public function login(JWTSubject&Authenticatable $user): string
     {
         $token = $this->jwt->fromUser($user);
         $this->setToken($token)->setUser($user);
@@ -188,14 +162,11 @@ class JWTGuard implements Guard
         return $token;
     }
 
-    /**
-     * Logout the user, thus invalidating the token.
-     */
     public function logout(bool $forceForever = false): void
     {
         try {
             $this->requireToken()->invalidate($forceForever);
-        } catch (JWTException $e) {
+        } catch (JWTException) {
             // Proceed with the logout as normal if we can't invalidate the token
         }
 
@@ -205,30 +176,20 @@ class JWTGuard implements Guard
         $this->jwt->unsetToken();
     }
 
-    /**
-     * Refresh the token.
-     */
     public function refresh(bool $forceForever = false, bool $resetClaims = false): string
     {
         return $this->requireToken()->refresh($forceForever, $resetClaims);
     }
 
-    /**
-     * Invalidate the token.
-     */
     public function invalidate(bool $forceForever = false): JWT
     {
         return $this->requireToken()->invalidate($forceForever);
     }
 
-    /**
-     * Create a new token by User id.
-     *
-     * @params mixed $id
-     */
-    public function tokenById($id): ?string
+    public function tokenById(int|string $id): ?string
     {
-        if ($user = $this->provider->retrieveById($id)) {
+        $user = $this->provider->retrieveById($id);
+        if ($user instanceof JWTSubject) {
             return $this->jwt->fromUser($user);
         }
 
@@ -236,14 +197,15 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Log a user into the application using their credentials.
-     *
-     * @return bool
+     * @param array<string, mixed> $credentials
      */
-    public function once(array $credentials = [])
+    public function once(array $credentials = []): bool
     {
         if ($this->validate($credentials)) {
-            $this->setUser($this->lastAttempted);
+            $user = $this->lastAttempted ?? $this->provider->retrieveByCredentials($credentials);
+            if ($user !== null) {
+                $this->setUser($user);
+            }
 
             return true;
         }
@@ -251,12 +213,7 @@ class JWTGuard implements Guard
         return false;
     }
 
-    /**
-     * Log the given User into the application.
-     *
-     * @return bool
-     */
-    public function onceUsingId($id)
+    public function onceUsingId(int|string $id): bool
     {
         if ($user = $this->provider->retrieveById($id)) {
             $this->setUser($user);
@@ -267,124 +224,68 @@ class JWTGuard implements Guard
         return false;
     }
 
-    /**
-     * Alias for onceUsingId.
-     *
-     * @return bool
-     */
-    public function byId($id)
+    public function byId(int|string $id): bool
     {
         return $this->onceUsingId($id);
     }
 
     /**
-     * Add any custom claims.
-     *
-     * @return $this
+     * @param array<string, mixed> $claims
      */
-    public function claims(array $claims)
+    public function claims(array $claims): static
     {
         $this->jwt->claims($claims);
 
         return $this;
     }
 
-    /**
-     * Get the raw Payload instance.
-     *
-     * @return Payload
-     */
-    public function getPayload()
+    public function getPayload(): Payload
     {
         return $this->requireToken()->getPayload();
     }
 
-    /**
-     * Alias for getPayload().
-     *
-     * @return Payload
-     */
-    public function payload()
+    public function payload(): Payload
     {
         return $this->getPayload();
     }
 
-    /**
-     * Set the token.
-     *
-     * @param Token|string $token
-     *
-     * @return $this
-     */
-    public function setToken($token)
+    public function setToken(Token|string $token): static
     {
         $this->jwt->setToken($token);
 
         return $this;
     }
 
-    /**
-     * Get the token ttl.
-     *
-     * @return int|null
-     */
-    public function getTTL()
+    public function getTTL(): ?int
     {
         return $this->jwt->factory()->getTTL();
     }
 
-    /**
-     * Set the token ttl.
-     *
-     * @param int|null $ttl
-     *
-     * @return $this
-     */
-    public function setTTL($ttl)
+    public function setTTL(?int $ttl): static
     {
         $this->jwt->factory()->setTTL($ttl);
 
         return $this;
     }
 
-    /**
-     * Get the user provider used by the guard.
-     *
-     * @return UserProvider
-     */
-    public function getProvider()
+    public function getProvider(): UserProvider
     {
         return $this->provider;
     }
 
-    /**
-     * Set the user provider used by the guard.
-     *
-     * @return $this
-     */
-    public function setProvider(UserProvider $provider)
+    public function setProvider(UserProvider $provider): static
     {
         $this->provider = $provider;
 
         return $this;
     }
 
-    /**
-     * Return the currently cached user.
-     *
-     * @return Authenticatable|null
-     */
-    public function getUser()
+    public function getUser(): ?Authenticatable
     {
         return $this->user;
     }
 
-    /**
-     * Set the current user.
-     *
-     * @return $this
-     */
-    public function setUser(Authenticatable $user)
+    public function setUser(Authenticatable $user): static
     {
         $result = $this->guardHelperSetUser($user);
 
@@ -393,46 +294,27 @@ class JWTGuard implements Guard
         return $result;
     }
 
-    /**
-     * Get the current request instance.
-     *
-     * @return Request
-     */
-    public function getRequest()
+    public function getRequest(): Request
     {
-        return $this->request ?: Request::createFromGlobals();
+        return $this->request;
     }
 
-    /**
-     * Set the current request instance.
-     *
-     * @return $this
-     */
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): static
     {
         $this->request = $request;
 
         return $this;
     }
 
-    /**
-     * Get the last user we attempted to authenticate.
-     *
-     * @return Authenticatable
-     */
-    public function getLastAttempted()
+    public function getLastAttempted(): ?Authenticatable
     {
         return $this->lastAttempted;
     }
 
     /**
-     * Determine if the user matches the credentials.
-     *
-     * @param array $credentials
-     *
-     * @return bool
+     * @param array<string, mixed> $credentials
      */
-    protected function hasValidCredentials($user, $credentials)
+    protected function hasValidCredentials(?Authenticatable $user, array $credentials): bool
     {
         $validated = null !== $user && $this->provider->validateCredentials($user, $credentials);
 
@@ -443,32 +325,26 @@ class JWTGuard implements Guard
         return $validated;
     }
 
-    /**
-     * Ensure the JWTSubject matches what is in the token.
-     *
-     * @return bool
-     */
-    protected function validateSubject()
+    protected function validateSubject(): bool
     {
-        // If the provider doesn't have the necessary method
-        // to get the underlying model name then allow.
-        if (!method_exists($this->provider, 'getModel')) {
+        if (! method_exists($this->provider, 'getModel')) {
             return true;
         }
 
-        return $this->jwt->checkSubjectModel($this->provider->getModel());
+        $model = $this->provider->getModel();
+        if (! is_string($model) && ! is_object($model)) {
+            return true;
+        }
+
+        return $this->jwt->checkSubjectModel($model);
     }
 
     /**
-     * Ensure that a token is available in the request.
-     *
-     * @return JWT
-     *
      * @throws JWTException
      */
-    protected function requireToken()
+    protected function requireToken(): JWT
     {
-        if (!$this->jwt->setRequest($this->getRequest())->getToken()) {
+        if (! $this->jwt->setRequest($this->getRequest())->getToken()) {
             throw new JWTException('Token could not be parsed from the request.');
         }
 
@@ -476,11 +352,9 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Fire the attempt event.
-     *
-     * @return void
+     * @param array<string, mixed> $credentials
      */
-    protected function fireAttemptEvent(array $credentials)
+    protected function fireAttemptEvent(array $credentials): void
     {
         $this->events->dispatch(new Attempting(
             $this->name,
@@ -489,16 +363,9 @@ class JWTGuard implements Guard
         ));
     }
 
-    /**
-     * Fires the validated event.
-     *
-     * @param Authenticatable $user
-     *
-     * @return void
-     */
-    protected function fireValidatedEvent($user)
+    protected function fireValidatedEvent(Authenticatable $user): void
     {
-        if (class_exists('Illuminate\Auth\Events\Validated')) {
+        if (class_exists(\Illuminate\Auth\Events\Validated::class)) {
             $this->events->dispatch(
                 new \Illuminate\Auth\Events\Validated(
                     $this->name,
@@ -509,13 +376,9 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Fire the failed authentication attempt event.
-     *
-     * @param Authenticatable|null $user
-     *
-     * @return void
+     * @param array<string, mixed> $credentials
      */
-    protected function fireFailedEvent($user, array $credentials)
+    protected function fireFailedEvent(?Authenticatable $user, array $credentials): void
     {
         $this->events->dispatch(new Failed(
             $this->name,
@@ -524,14 +387,7 @@ class JWTGuard implements Guard
         ));
     }
 
-    /**
-     * Fire the authenticated event.
-     *
-     * @param Authenticatable $user
-     *
-     * @return void
-     */
-    protected function fireAuthenticatedEvent($user)
+    protected function fireAuthenticatedEvent(Authenticatable $user): void
     {
         $this->events->dispatch(new Authenticated(
             $this->name,
@@ -539,15 +395,7 @@ class JWTGuard implements Guard
         ));
     }
 
-    /**
-     * Fire the login event.
-     *
-     * @param Authenticatable $user
-     * @param bool            $remember
-     *
-     * @return void
-     */
-    protected function fireLoginEvent($user, $remember = false)
+    protected function fireLoginEvent(Authenticatable $user, bool $remember = false): void
     {
         $this->events->dispatch(new Login(
             $this->name,
@@ -556,16 +404,12 @@ class JWTGuard implements Guard
         ));
     }
 
-    /**
-     * Fire the logout event.
-     *
-     * @param Authenticatable $user
-     * @param bool            $remember
-     *
-     * @return void
-     */
-    protected function fireLogoutEvent($user, $remember = false)
+    protected function fireLogoutEvent(?Authenticatable $user): void
     {
+        if ($user === null) {
+            return;
+        }
+
         $this->events->dispatch(new Logout(
             $this->name,
             $user
@@ -573,17 +417,14 @@ class JWTGuard implements Guard
     }
 
     /**
-     * Magically call the JWT instance.
-     *
-     * @param string $method
-     * @param array  $parameters
+     * @param array<mixed> $parameters
      *
      * @throws BadMethodCallException
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, array $parameters): mixed
     {
         if (method_exists($this->jwt, $method)) {
-            return call_user_func_array([$this->jwt, $method], $parameters);
+            return $this->jwt->$method(...$parameters);
         }
 
         if (static::hasMacro($method)) {

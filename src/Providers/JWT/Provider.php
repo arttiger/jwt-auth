@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
@@ -18,32 +10,23 @@ use ArtTiger\JWTAuth\Exceptions\SecretMissingException;
 
 abstract class Provider
 {
-    /**
-     * The secret.
-     */
     protected ?string $secret;
 
     /**
-     * The array of keys.
+     * @var array<string, mixed>
      */
     protected array $keys;
 
-    /**
-     * The used algorithm.
-     */
     protected string $algo;
 
     /**
-     * Constructor.
+     * @param array<string, mixed> $keys
      *
-     * @param string $secret
-     * @param string $algo
-     *
-     * @return void
+     * @throws SecretMissingException
      */
-    public function __construct($secret, $algo, array $keys)
+    public function __construct(?string $secret, string $algo, array $keys)
     {
-        if (is_null($secret) && (is_null($keys['public']) || is_null($keys['private']))) {
+        if ($secret === null && (! isset($keys['public']) || ! isset($keys['private']))) {
             throw new SecretMissingException();
         }
 
@@ -52,60 +35,34 @@ abstract class Provider
         $this->keys = $keys;
     }
 
-    /**
-     * Set the algorithm used to sign the token.
-     *
-     * @param string $algo
-     *
-     * @return $this
-     */
-    public function setAlgo($algo)
+    public function setAlgo(string $algo): static
     {
         $this->algo = $algo;
 
         return $this;
     }
 
-    /**
-     * Get the algorithm used to sign the token.
-     *
-     * @return string
-     */
-    public function getAlgo()
+    public function getAlgo(): string
     {
         return $this->algo;
     }
 
-    /**
-     * Set the secret used to sign the token.
-     *
-     * @param string $secret
-     *
-     * @return $this
-     */
-    public function setSecret($secret)
+    public function setSecret(?string $secret): static
     {
         $this->secret = $secret;
 
         return $this;
     }
 
-    /**
-     * Get the secret used to sign the token.
-     *
-     * @return string
-     */
-    public function getSecret()
+    public function getSecret(): ?string
     {
         return $this->secret;
     }
 
     /**
-     * Set the keys used to sign the token.
-     *
-     * @return $this
+     * @param array<string, mixed> $keys
      */
-    public function setKeys(array $keys)
+    public function setKeys(array $keys): static
     {
         $this->keys = $keys;
 
@@ -113,76 +70,46 @@ abstract class Provider
     }
 
     /**
-     * Get the array of keys used to sign tokens
-     * with an asymmetric algorithm.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function getKeys()
+    public function getKeys(): array
     {
         return $this->keys;
     }
 
-    /**
-     * Get the public key used to sign tokens
-     * with an asymmetric algorithm.
-     *
-     * @return resource|string
-     */
-    public function getPublicKey()
+    public function getPublicKey(): ?string
     {
-        return Arr::get($this->keys, 'public');
+        $value = Arr::get($this->keys, 'public');
+
+        return is_string($value) ? $value : null;
+    }
+
+    public function getPrivateKey(): ?string
+    {
+        $value = Arr::get($this->keys, 'private');
+
+        return is_string($value) ? $value : null;
+    }
+
+    public function getPassphrase(): ?string
+    {
+        $value = Arr::get($this->keys, 'passphrase');
+
+        return is_string($value) ? $value : null;
+    }
+
+    protected function getSigningKey(): string
+    {
+        return $this->isAsymmetric() ? (string) $this->getPrivateKey() : (string) $this->getSecret();
+    }
+
+    protected function getVerificationKey(): string
+    {
+        return $this->isAsymmetric() ? (string) $this->getPublicKey() : (string) $this->getSecret();
     }
 
     /**
-     * Get the private key used to sign tokens
-     * with an asymmetric algorithm.
-     *
-     * @return resource|string
-     */
-    public function getPrivateKey()
-    {
-        return Arr::get($this->keys, 'private');
-    }
-
-    /**
-     * Get the passphrase used to sign tokens
-     * with an asymmetric algorithm.
-     *
-     * @return string
-     */
-    public function getPassphrase()
-    {
-        return Arr::get($this->keys, 'passphrase');
-    }
-
-    /**
-     * Get the key used to sign the tokens.
-     *
-     * @return resource|string
-     */
-    protected function getSigningKey()
-    {
-        return $this->isAsymmetric() ? $this->getPrivateKey() : $this->getSecret();
-    }
-
-    /**
-     * Get the key used to verify the tokens.
-     *
-     * @return resource|string
-     */
-    protected function getVerificationKey()
-    {
-        return $this->isAsymmetric() ? $this->getPublicKey() : $this->getSecret();
-    }
-
-    /**
-     * Determine if the algorithm is asymmetric, and thus
-     * requires a public/private key combo.
-     *
-     * @return bool
-     *
      * @throws JWTException
      */
-    abstract protected function isAsymmetric();
+    abstract protected function isAsymmetric(): bool;
 }

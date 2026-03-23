@@ -1,32 +1,27 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Middleware;
 
+use ArtTiger\JWTAuth\Abstracts\Http\Middleware;
+use Closure;
+use Exception;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class Check extends BaseMiddleware
+class Check extends Middleware
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param Request $request
+     * @param Closure(Request): Response $next
      */
-    public function handle($request, \Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         if ($this->auth->parser()->setRequest($request)->hasToken()) {
             try {
                 $this->auth->parseToken()->authenticate();
-            } catch (\Exception $e) {
+            } catch (Exception) {
+                // continue without authentication
             }
         }
 

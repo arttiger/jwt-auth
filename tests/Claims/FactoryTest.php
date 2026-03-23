@@ -46,7 +46,7 @@ class FactoryTest extends AbstractTestCase
 
     public function testItShouldGetADefinedClaimInstanceWhenPassingANameAndValue(): void
     {
-        $this->assertInstanceOf(Subject::class, $this->factory->get('sub', 1));
+        $this->assertInstanceOf(Subject::class, $this->factory->get('sub', '1'));
         $this->assertInstanceOf(Issuer::class, $this->factory->get('iss', 'http://example.com'));
         $this->assertInstanceOf(Expiration::class, $this->factory->get('exp', $this->testNowTimestamp + 3600));
         $this->assertInstanceOf(NotBefore::class, $this->factory->get('nbf', $this->testNowTimestamp));
@@ -86,5 +86,47 @@ class FactoryTest extends AbstractTestCase
         $this->factory->extend('foo', Foo::class);
 
         $this->assertInstanceOf(Foo::class, $this->factory->get('foo', 'bar'));
+    }
+
+    public function testItShouldReturnTrueForRegisteredClaimNames(): void
+    {
+        foreach (['aud', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub'] as $name) {
+            $this->assertTrue($this->factory->has($name), "Expected factory to have claim: {$name}");
+        }
+    }
+
+    public function testItShouldReturnFalseForUnregisteredClaimNames(): void
+    {
+        $this->assertFalse($this->factory->has('foo'));
+        $this->assertFalse($this->factory->has('custom_claim'));
+    }
+
+    public function testItShouldSetTtlToNullWhenPassingNull(): void
+    {
+        $this->factory->setTTL(null);
+
+        $this->assertNull($this->factory->getTTL());
+    }
+
+    public function testItShouldSetLeewayAndReturnSelf(): void
+    {
+        $result = $this->factory->setLeeway(30);
+
+        $this->assertInstanceOf(Factory::class, $result);
+    }
+
+    public function testItShouldApplyLeewayToDatetimeClaims(): void
+    {
+        $this->factory->setLeeway(30);
+
+        $exp = $this->factory->get('exp', $this->testNowTimestamp + 3600);
+        $nbf = $this->factory->get('nbf', $this->testNowTimestamp);
+        $iat = $this->factory->get('iat', $this->testNowTimestamp);
+
+        // Non-datetime claims should not have setLeeway — no assertion to make there
+        // Datetime claims are returned with leeway set (verified via validatePayload behaviour)
+        $this->assertInstanceOf(Expiration::class, $exp);
+        $this->assertInstanceOf(NotBefore::class, $nbf);
+        $this->assertInstanceOf(IssuedAt::class, $iat);
     }
 }

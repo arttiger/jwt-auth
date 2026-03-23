@@ -1,19 +1,12 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
 use Illuminate\Support\Collection;
 use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\UnencryptedToken;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer;
 use Lcobucci\JWT\Signer\Ecdsa;
@@ -23,7 +16,6 @@ use Lcobucci\JWT\Signer\Ecdsa\Sha512 as ES512;
 use Lcobucci\JWT\Signer\Hmac\Sha256 as HS256;
 use Lcobucci\JWT\Signer\Hmac\Sha384 as HS384;
 use Lcobucci\JWT\Signer\Hmac\Sha512 as HS512;
-use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Signer\Rsa;
 use Lcobucci\JWT\Signer\Rsa\Sha256 as RS256;
@@ -37,102 +29,16 @@ use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
 class Lcobucci extends Provider implements JWT
 {
-    /**
-     * The builder instance.
-     *
-     * @var Builder
-     */
-    protected $builder;
+    protected ?Builder $builder = null;
+
+    protected Configuration $config;
+
+    protected Signer $signer;
 
     /**
-     * The configuration instance.
-     *
-     * @var Configuration
+     * @var array<string, class-string<Signer>>
      */
-    protected $config;
-
-    /**
-     * The Signer instance.
-     *
-     * @var Signer
-     */
-    protected $signer;
-
-    /**
-     * Create the Lcobucci provider.
-     *
-     * @param string        $secret
-     * @param string        $algo
-     * @param Configuration $config optional, to pass an existing configuration to be used
-     *
-     * @return void
-     */
-    public function __construct(
-        $secret,
-        $algo,
-        array $keys,
-        $config = null,
-    ) {
-        parent::__construct($secret, $algo, $keys);
-        $this->generateConfig($config);
-    }
-
-    /**
-     * Generate the config.
-     *
-     * @param Configuration $config optional, to pass an existing configuration to be used
-     *
-     * @return void
-     */
-    private function generateConfig($config = null)
-    {
-        $this->signer = $this->getSigner();
-
-        if (!is_null($config)) {
-            $this->config = $config;
-        } elseif ($this->isAsymmetric()) {
-            $this->config = Configuration::forAsymmetricSigner($this->signer, $this->getSigningKey(), $this->getVerificationKey());
-        } else {
-            $this->config = Configuration::forSymmetricSigner($this->signer, InMemory::plainText($this->getSecret()));
-        }
-        if (!count($this->config->validationConstraints())) {
-            $this->config->setValidationConstraints(
-                new SignedWith($this->signer, $this->getVerificationKey()),
-            );
-        }
-    }
-
-    /**
-     * Set the secret used to sign the token and regenerate the config using the secret.
-     *
-     * @param string $secret
-     *
-     * @return $this
-     */
-    public function setSecret($secret)
-    {
-        $this->secret = $secret;
-        $this->generateConfig();
-
-        return $this;
-    }
-
-    /**
-     * Gets the {@see $config} attribute.
-     *
-     * @return Configuration
-     */
-    public function getConfig()
-    {
-        return $this->config;
-    }
-
-    /**
-     * Signers that this provider supports.
-     *
-     * @var array
-     */
-    protected $signers = [
+    protected array $signers = [
         'HS256' => HS256::class,
         'HS384' => HS384::class,
         'HS512' => HS512::class,
@@ -145,20 +51,69 @@ class Lcobucci extends Provider implements JWT
     ];
 
     /**
-     * Create a JSON Web Token.
-     *
-     * @return string
+     * @param array<string, mixed> $keys
+     */
+    public function __construct(
+        ?string $secret,
+        string $algo,
+        array $keys,
+        ?Configuration $config = null,
+    ) {
+        parent::__construct($secret, $algo, $keys);
+        $this->generateConfig($config);
+    }
+
+    private function generateConfig(?Configuration $config = null): void
+    {
+        $this->signer = $this->getSigner();
+
+        if ($config !== null) {
+            $this->config = $config;
+        } elseif ($this->isAsymmetric()) {
+            $this->config = Configuration::forAsymmetricSigner(
+                $this->signer,
+                $this->getSigningInMemoryKey(),
+                $this->getVerificationInMemoryKey()
+            );
+        } else {
+            $this->config = Configuration::forSymmetricSigner(
+                $this->signer,
+                $this->getSigningInMemoryKey()
+            );
+        }
+
+        if (count($this->config->validationConstraints()) === 0) {
+            $this->config->setValidationConstraints(
+                new SignedWith($this->signer, $this->getVerificationInMemoryKey())
+            );
+        }
+    }
+
+    public function setSecret(?string $secret): static
+    {
+        $this->secret = $secret;
+        $this->generateConfig();
+
+        return $this;
+    }
+
+    public function getConfig(): Configuration
+    {
+        return $this->config;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
      *
      * @throws JWTException
      */
-    public function encode(array $payload)
+    public function encode(array $payload): string
     {
-        $this->builder = null;
         $this->builder = $this->config->builder();
 
         try {
             foreach ($payload as $key => $value) {
-                $this->builder = $this->addClaim($key, $value);
+                $this->builder = $this->addClaim((string) $key, $value);
             }
 
             return $this->builder->getToken($this->config->signer(), $this->config->signingKey())->toString();
@@ -168,107 +123,175 @@ class Lcobucci extends Provider implements JWT
     }
 
     /**
-     * Decode a JSON Web Token.
-     *
-     * @param string $token
-     *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws JWTException
      */
-    public function decode($token)
+    public function decode(string $token): array
     {
+        if ($token === '') {
+            throw new TokenInvalidException('Token cannot be empty.');
+        }
+
         try {
             $jwt = $this->config->parser()->parse($token);
         } catch (\Exception $e) {
             throw new TokenInvalidException('Could not decode token: '.$e->getMessage(), $e->getCode(), $e);
         }
 
-        if (!$this->config->validator()->validate($jwt, ...$this->config->validationConstraints())) {
+        if (! $this->config->validator()->validate($jwt, ...$this->config->validationConstraints())) {
             throw new TokenInvalidException('Token Signature could not be verified.');
         }
 
-        return (new Collection($jwt->claims()->all()))->map(function ($claim) {
-            if (is_a($claim, \DateTimeImmutable::class)) {
-                return $claim->getTimestamp();
-            }
-            if (is_object($claim) && method_exists($claim, 'getValue')) {
-                return $claim->getValue();
-            }
+        if (! ($jwt instanceof UnencryptedToken)) {
+            throw new TokenInvalidException('Token is not an unencrypted JWT.');
+        }
 
-            return $claim;
-        })->toArray();
+        $result = [];
+        foreach ($jwt->claims()->all() as $claimKey => $claim) {
+            if (! is_string($claimKey)) {
+                continue;
+            }
+            if ($claim instanceof \DateTimeImmutable) {
+                $result[$claimKey] = $claim->getTimestamp();
+            } elseif (is_object($claim) && method_exists($claim, 'getValue')) {
+                $result[$claimKey] = $claim->getValue();
+            } else {
+                $result[$claimKey] = $claim;
+            }
+        }
+
+        return $result;
     }
 
-    /**
-     * Adds a claim to the {@see $config}.
-     *
-     * @param string $key
-     */
-    protected function addClaim($key, $value): Builder
+    protected function addClaim(string $key, mixed $value): Builder
     {
-        if (!isset($this->builder)) {
+        if ($this->builder === null) {
             $this->builder = $this->config->builder();
         }
 
-        return match ($key) {
-            RegisteredClaims::ID => $this->builder->identifiedBy($value),
-            RegisteredClaims::EXPIRATION_TIME => $this->builder->expiresAt(\DateTimeImmutable::createFromFormat('U', $value)),
-            RegisteredClaims::NOT_BEFORE => $this->builder->canOnlyBeUsedAfter(\DateTimeImmutable::createFromFormat('U', $value)),
-            RegisteredClaims::ISSUED_AT => $this->builder->issuedAt(\DateTimeImmutable::createFromFormat('U', $value)),
-            RegisteredClaims::ISSUER => $this->builder->issuedBy($value),
-            RegisteredClaims::AUDIENCE => is_array($value) ? $this->builder->permittedFor(...$value) : $this->builder->permittedFor($value),
-            RegisteredClaims::SUBJECT => $this->builder->relatedTo($value),
-            default => $this->builder->withClaim($key, $value),
-        };
+        if ($key === '') {
+            throw new JWTException('Claim key cannot be empty');
+        }
+
+        switch ($key) {
+            case RegisteredClaims::ID:
+                $strVal = is_string($value) ? $value : '';
+                if ($strVal === '') {
+                    throw new JWTException('JTI claim must be a non-empty string');
+                }
+
+                return $this->builder->identifiedBy($strVal);
+
+            case RegisteredClaims::EXPIRATION_TIME:
+                $ts = is_numeric($value) ? (int) $value : 0;
+
+                return $this->builder->expiresAt(
+                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                );
+
+            case RegisteredClaims::NOT_BEFORE:
+                $ts = is_numeric($value) ? (int) $value : 0;
+
+                return $this->builder->canOnlyBeUsedAfter(
+                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                );
+
+            case RegisteredClaims::ISSUED_AT:
+                $ts = is_numeric($value) ? (int) $value : 0;
+
+                return $this->builder->issuedAt(
+                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                );
+
+            case RegisteredClaims::ISSUER:
+                $strVal = is_string($value) ? $value : '';
+                if ($strVal === '') {
+                    throw new JWTException('ISS claim must be a non-empty string');
+                }
+
+                return $this->builder->issuedBy($strVal);
+
+            case RegisteredClaims::AUDIENCE:
+                $audiences = [];
+                foreach ((is_array($value) ? $value : [$value]) as $aud) {
+                    $audStr = is_string($aud) ? $aud : '';
+                    if ($audStr === '') {
+                        throw new JWTException('Each AUD value must be a non-empty string');
+                    }
+                    $audiences[] = $audStr;
+                }
+                if (empty($audiences)) {
+                    throw new JWTException('AUD claim must have at least one audience');
+                }
+
+                return $this->builder->permittedFor(...$audiences);
+
+            case RegisteredClaims::SUBJECT:
+                $strVal = is_string($value) ? $value : '';
+                if ($strVal === '') {
+                    throw new JWTException('SUB claim must be a non-empty string');
+                }
+
+                return $this->builder->relatedTo($strVal);
+
+            default:
+                return $this->builder->withClaim($key, $value);
+        }
     }
 
     /**
-     * Get the signer instance.
-     *
-     * @return Signer
-     *
      * @throws JWTException
      */
-    protected function getSigner()
+    protected function getSigner(): Signer
     {
-        if (!array_key_exists($this->algo, $this->signers)) {
+        if (! array_key_exists($this->algo, $this->signers)) {
             throw new JWTException('The given algorithm could not be found');
         }
 
-        $signer = $this->signers[$this->algo];
-
-        return new $signer();
+        return new $this->signers[$this->algo]();
     }
 
-    protected function isAsymmetric()
+    protected function isAsymmetric(): bool
     {
         $reflect = new \ReflectionClass($this->signer);
 
         return $reflect->isSubclassOf(Rsa::class) || $reflect->isSubclassOf(Ecdsa::class);
     }
 
-    /**
-     * Get the key used to sign the tokens.
-     *
-     * @return Key|string
-     */
-    protected function getSigningKey()
+    protected function getSigningKey(): string
     {
-        return $this->isAsymmetric() ?
-            InMemory::plainText($this->getPrivateKey(), $this->getPassphrase() ?? '') :
-            InMemory::plainText($this->getSecret());
+        return $this->isAsymmetric()
+            ? (string) $this->getPrivateKey()
+            : (string) $this->getSecret();
     }
 
-    /**
-     * Get the key used to verify the tokens.
-     *
-     * @return Key|string
-     */
-    protected function getVerificationKey()
+    protected function getVerificationKey(): string
     {
-        return $this->isAsymmetric() ?
-            InMemory::plainText($this->getPublicKey()) :
-            InMemory::plainText($this->getSecret());
+        return $this->isAsymmetric()
+            ? (string) $this->getPublicKey()
+            : (string) $this->getSecret();
+    }
+
+    protected function getSigningInMemoryKey(): InMemory
+    {
+        $key = $this->getSigningKey();
+        if ($key === '') {
+            throw new JWTException('Signing key cannot be empty');
+        }
+
+        return $this->isAsymmetric()
+            ? InMemory::plainText($key, $this->getPassphrase() ?? '')
+            : InMemory::plainText($key);
+    }
+
+    protected function getVerificationInMemoryKey(): InMemory
+    {
+        $key = $this->getVerificationKey();
+        if ($key === '') {
+            throw new JWTException('Verification key cannot be empty');
+        }
+
+        return InMemory::plainText($key);
     }
 }

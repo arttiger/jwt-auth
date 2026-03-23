@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Parser;
 
@@ -19,14 +11,20 @@ class LumenRouteParams extends RouteParams
 {
     /**
      * Try to get the token from the route parameters.
-     *
-     * @return string|null
      */
-    public function parse(Request $request)
+    public function parse(Request $request): ?string
     {
         // WARNING: Only use this parser if you know what you're doing!
         // It will only work with poorly-specified aspects of certain Lumen releases.
-        // Route is the expected kind of array, and has a parameter with the key we want.
-        return Arr::get($request->route(), '2.'.$this->key);
+        $resolver = $request->getRouteResolver();
+        $route = $resolver();
+
+        if (! is_array($route)) {
+            return null;
+        }
+
+        $value = Arr::get($route, '2.'.$this->key);
+
+        return is_string($value) ? $value : null;
     }
 }

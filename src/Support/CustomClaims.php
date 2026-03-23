@@ -1,32 +1,20 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Support;
 
 trait CustomClaims
 {
     /**
-     * Custom claims.
-     *
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $customClaims = [];
+    protected array $customClaims = [];
 
     /**
-     * Set the custom claims.
-     *
-     * @return $this
+     * @param array<string, mixed> $customClaims
      */
-    public function customClaims(array $customClaims)
+    public function customClaims(array $customClaims): static
     {
         $this->customClaims = $customClaims;
 
@@ -34,21 +22,17 @@ trait CustomClaims
     }
 
     /**
-     * Alias to set the custom claims.
-     *
-     * @return $this
+     * @param array<string, mixed> $customClaims
      */
-    public function claims(array $customClaims)
+    public function claims(array $customClaims): static
     {
         return $this->customClaims($customClaims);
     }
 
     /**
-     * Get the custom claims.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function getCustomClaims()
+    public function getCustomClaims(): array
     {
         return $this->customClaims;
     }

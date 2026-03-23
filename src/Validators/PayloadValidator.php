@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Validators;
 
+use ArtTiger\JWTAuth\Abstracts\Validator;
 use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
 class PayloadValidator extends Validator
@@ -24,35 +26,57 @@ class PayloadValidator extends Validator
     ];
 
     /**
-     * The refresh TTL.
+     * The refresh TTL in minutes (null = no limit).
      */
-    protected int $refreshTTL = 20160;
+    protected ?int $refreshTTL = 20160;
 
     /**
-     * Run the validations on the payload array.
+     * Run the validations on the claims collection.
      *
-     * @param array $value
-     *
-     * @return Collection
+     * @param array<mixed> $value
      */
-    public function check(array $value)
+    public function check(array $value): void
     {
-        $this->validateStructure($value);
+        // $value is expected to be a Collection passed via check($claims)
+        // but since the contract requires array<mixed>, we receive a Collection
+        // which extends Illuminate Collection and is iterable.
+        // The actual Collection is passed from Payload::__construct.
+        /** @var Collection $claims */
+        $claims = $value[0] ?? $value;
 
-        return $this->refreshFlow ? $this->validateRefresh($value) : $this->validatePayload($value);
+        $this->validateStructure($claims);
+
+        if ($this->refreshFlow) {
+            $this->validateRefresh($claims);
+        } else {
+            $this->validatePayload($claims);
+        }
     }
 
     /**
-     * Ensure the payload contains the required claims and
-     * the claims have the relevant type.
-     *
-     * @return void
+     * Validate a Claims Collection directly (used by Payload).
      *
      * @throws TokenInvalidException
      */
-    protected function validateStructure(Collection $claims)
+    public function validateCollection(Collection $claims): void
     {
-        if ($this->requiredClaims && !$claims->hasAllClaims($this->requiredClaims)) {
+        $this->validateStructure($claims);
+
+        if ($this->refreshFlow) {
+            $this->validateRefresh($claims);
+        } else {
+            $this->validatePayload($claims);
+        }
+    }
+
+    /**
+     * Ensure the payload contains the required claims.
+     *
+     * @throws TokenInvalidException
+     */
+    protected function validateStructure(Collection $claims): void
+    {
+        if ($this->requiredClaims && ! $claims->hasAllClaims($this->requiredClaims)) {
             throw new TokenInvalidException('JWT payload does not contain the required claims');
         }
     }
@@ -60,34 +84,32 @@ class PayloadValidator extends Validator
     /**
      * Validate the payload timestamps.
      *
-     * @return Collection
-     *
      * @throws TokenInvalidException
-     * @throws \ArtTiger\JWTAuth\Exceptions\TokenExpiredException
+     * @throws TokenExpiredException
      */
-    protected function validatePayload(Collection $claims)
+    protected function validatePayload(Collection $claims): void
     {
-        return $claims->validate('payload');
+        $claims->validate('payload');
     }
 
     /**
      * Check the token in the refresh flow context.
      *
-     * @return Collection
-     *
-     * @throws \ArtTiger\JWTAuth\Exceptions\TokenExpiredException
+     * @throws TokenExpiredException
      */
-    protected function validateRefresh(Collection $claims)
+    protected function validateRefresh(Collection $claims): void
     {
-        return null === $this->refreshTTL ? $claims : $claims->validate('refresh', $this->refreshTTL);
+        if ($this->refreshTTL !== null) {
+            $claims->validate('refresh', $this->refreshTTL);
+        }
     }
 
     /**
      * Set the required claims.
      *
-     * @return $this
+     * @param string[] $claims
      */
-    public function setRequiredClaims(array $claims)
+    public function setRequiredClaims(array $claims): static
     {
         $this->requiredClaims = $claims;
 
@@ -95,9 +117,9 @@ class PayloadValidator extends Validator
     }
 
     /**
-     * Set the refresh ttl.
+     * Set the refresh TTL in minutes.
      */
-    public function setRefreshTTL(int $ttl): static
+    public function setRefreshTTL(?int $ttl): static
     {
         $this->refreshTTL = $ttl;
 

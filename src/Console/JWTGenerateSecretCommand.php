@@ -1,17 +1,10 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Console;
 
+use ArtTiger\JWTAuth\Traits\EnvHelperTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -20,8 +13,6 @@ class JWTGenerateSecretCommand extends Command
     use EnvHelperTrait;
 
     /**
-     * The console command signature.
-     *
      * @var string
      */
     protected $signature = 'jwt:secret
@@ -30,31 +21,24 @@ class JWTGenerateSecretCommand extends Command
         {--f|force : Skip confirmation when overwriting an existing key.}';
 
     /**
-     * The console command description.
-     *
      * @var string
      */
     protected $description = 'Set the JWTAuth secret key used to sign the tokens';
 
-    /**
-     * Execute the console command.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): int
     {
         $key = Str::random(64);
 
         if ($this->option('show')) {
             $this->comment($key);
 
-            return;
+            return self::SUCCESS;
         }
 
-        if (!$this->envFileExists()) {
+        if (! $this->envFileExists()) {
             $this->displayKey($key);
 
-            return;
+            return self::SUCCESS;
         }
 
         $updated = $this->updateEnvEntry('JWT_SECRET', $key, function () {
@@ -64,7 +48,7 @@ class JWTGenerateSecretCommand extends Command
                 return false;
             }
 
-            if (false === $this->isConfirmed()) {
+            if (! $this->isConfirmed()) {
                 $this->comment('Phew... No changes were made to your secret key.');
 
                 return false;
@@ -77,31 +61,22 @@ class JWTGenerateSecretCommand extends Command
             $this->updateEnvEntry('JWT_ALGO', 'HS256');
             $this->info('jwt-auth secret set successfully.');
         }
+
+        return self::SUCCESS;
     }
 
-    /**
-     * Display the key.
-     *
-     * @param string $key
-     *
-     * @return void
-     */
-    protected function displayKey($key)
+    protected function displayKey(string $key): void
     {
-        $this->laravel['config']['jwt.secret'] = $key;
+        $config = $this->laravel->make(\Illuminate\Contracts\Config\Repository::class);
+        $config->set('jwt.secret', $key);
 
         $this->info("jwt-auth secret [$key] set successfully.");
     }
 
-    /**
-     * Check if the modification is confirmed.
-     *
-     * @return bool
-     */
-    protected function isConfirmed()
+    protected function isConfirmed(): bool
     {
-        return $this->option('force') ? true : $this->confirm(
+        return (bool) ($this->option('force') ?: $this->confirm(
             'This will invalidate all existing tokens. Are you sure you want to override the secret key?'
-        );
+        ));
     }
 }

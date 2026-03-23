@@ -1,22 +1,15 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Http\Parser;
 
+use ArtTiger\JWTAuth\Contracts\Http\Parser as ParserContract;
+use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
+use ArtTiger\JWTAuth\Traits\KeyTrait;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use ArtTiger\JWTAuth\Contracts\Http\Parser as ParserContract;
-use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
 class Cookies implements ParserContract
 {
@@ -24,12 +17,10 @@ class Cookies implements ParserContract
 
     /**
      * Decrypt or not the cookie while parsing.
-     *
-     * @var bool
      */
-    private $decrypt;
+    private bool $decrypt;
 
-    public function __construct($decrypt = true)
+    public function __construct(bool $decrypt = true)
     {
         $this->decrypt = $decrypt;
     }
@@ -37,20 +28,26 @@ class Cookies implements ParserContract
     /**
      * Try to parse the token from the request cookies.
      *
-     * @return string|null
-     *
      * @throws TokenInvalidException
      */
-    public function parse(Request $request)
+    public function parse(Request $request): ?string
     {
         if ($this->decrypt && $request->hasCookie($this->key)) {
             try {
-                return Crypt::decrypt($request->cookie($this->key));
+                $raw = $request->cookie($this->key);
+                if (! is_string($raw)) {
+                    return null;
+                }
+                $decrypted = Crypt::decrypt($raw);
+
+                return is_string($decrypted) ? $decrypted : null;
             } catch (DecryptException $ex) {
-                throw new TokenInvalidException('Token has not decrypted successfully.');
+                throw new TokenInvalidException(message: 'Token has not decrypted successfully.');
             }
         }
 
-        return $request->cookie($this->key);
+        $cookie = $request->cookie($this->key);
+
+        return is_string($cookie) ? $cookie : null;
     }
 }

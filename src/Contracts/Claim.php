@@ -1,14 +1,6 @@
 <?php
 
-/*
- * This file is part of jwt-auth.
- *
- * (c) 2014-2021 Sean Tymon <tymon148@gmail.com>
- * (c) 2021 PHP Open Source Saver
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Contracts;
 
@@ -19,33 +11,27 @@ interface Claim
     /**
      * Set the claim value, and call a validate method.
      *
-     * @return $this
-     *
      * @throws InvalidClaimException
      */
-    public function setValue($value);
+    public function setValue(mixed $value): static;
 
     /**
      * Get the claim value.
      */
-    public function getValue();
+    public function getValue(): mixed;
 
     /**
      * Set the claim name.
      */
-    public function setName(string $name): self;
+    public function setName(string $name): static;
 
     /**
      * Get the claim name.
-     *
-     * @return string
      */
     public function getName(): string;
 
     /**
-     * Validate the Claim value.
-     *
-     * @return bool
+     * Validate the Claim value on creation.
      */
-    public function validateCreate($value);
+    public function validateCreate(mixed $value): mixed;
 }
