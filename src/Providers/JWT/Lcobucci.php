@@ -4,25 +4,15 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
-use Illuminate\Support\Collection;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\UnencryptedToken;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer;
-use Lcobucci\JWT\Signer\Ecdsa;
-use Lcobucci\JWT\Signer\Ecdsa\Sha256 as ES256;
-use Lcobucci\JWT\Signer\Ecdsa\Sha384 as ES384;
-use Lcobucci\JWT\Signer\Ecdsa\Sha512 as ES512;
-use Lcobucci\JWT\Signer\Hmac\Sha256 as HS256;
-use Lcobucci\JWT\Signer\Hmac\Sha384 as HS384;
-use Lcobucci\JWT\Signer\Hmac\Sha512 as HS512;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use Lcobucci\JWT\Signer\Rsa;
-use Lcobucci\JWT\Signer\Rsa\Sha256 as RS256;
-use Lcobucci\JWT\Signer\Rsa\Sha384 as RS384;
-use Lcobucci\JWT\Signer\Rsa\Sha512 as RS512;
 use Lcobucci\JWT\Token\RegisteredClaims;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
+use ArtTiger\JWTAuth\Algorithms\Algorithm;
+use ArtTiger\JWTAuth\Algorithms\AlgorithmRegistry;
 use ArtTiger\JWTAuth\Contracts\Providers\JWT;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
@@ -35,31 +25,24 @@ class Lcobucci extends Provider implements JWT
 
     protected Signer $signer;
 
-    /**
-     * @var array<string, class-string<Signer>>
-     */
-    protected array $signers = [
-        'HS256' => HS256::class,
-        'HS384' => HS384::class,
-        'HS512' => HS512::class,
-        'RS256' => RS256::class,
-        'RS384' => RS384::class,
-        'RS512' => RS512::class,
-        'ES256' => ES256::class,
-        'ES384' => ES384::class,
-        'ES512' => ES512::class,
-    ];
+    protected Algorithm $algorithm;
 
     /**
      * @param array<string, mixed> $keys
+     *
+     * @throws JWTException when the algorithm is unsupported or the key material is invalid.
      */
     public function __construct(
-        ?string $secret,
+        #[\SensitiveParameter] ?string $secret,
         string $algo,
-        array $keys,
+        #[\SensitiveParameter] array $keys,
         ?Configuration $config = null,
     ) {
         parent::__construct($secret, $algo, $keys);
+
+        $this->algorithm = AlgorithmRegistry::find($algo);
+        $this->algorithm->validateKeyMaterial($secret, $keys);
+
         $this->generateConfig($config);
     }
 
@@ -89,9 +72,10 @@ class Lcobucci extends Provider implements JWT
         }
     }
 
-    public function setSecret(?string $secret): static
+    public function setSecret(#[\SensitiveParameter] ?string $secret): static
     {
         $this->secret = $secret;
+        $this->algorithm->validateKeyMaterial($secret, $this->keys);
         $this->generateConfig();
 
         return $this;
@@ -240,23 +224,16 @@ class Lcobucci extends Provider implements JWT
         }
     }
 
-    /**
-     * @throws JWTException
-     */
     protected function getSigner(): Signer
     {
-        if (! array_key_exists($this->algo, $this->signers)) {
-            throw new JWTException('The given algorithm could not be found');
-        }
+        $class = $this->algorithm->signerClass();
 
-        return new $this->signers[$this->algo]();
+        return new $class();
     }
 
     protected function isAsymmetric(): bool
     {
-        $reflect = new \ReflectionClass($this->signer);
-
-        return $reflect->isSubclassOf(Rsa::class) || $reflect->isSubclassOf(Ecdsa::class);
+        return $this->algorithm->isAsymmetric();
     }
 
     protected function getSigningKey(): string

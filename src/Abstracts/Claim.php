@@ -54,7 +54,7 @@ abstract class Claim implements Arrayable, ClaimContract, Jsonable, JsonSerializ
         return $this->name;
     }
 
-    public function setLeeway(int $leeway): static
+    public function setLeeway(int $leeway): self
     {
         return $this;
     }

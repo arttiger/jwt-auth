@@ -232,7 +232,7 @@ class JWTGuard implements Guard
     /**
      * @param array<string, mixed> $claims
      */
-    public function claims(array $claims): static
+    public function claims(array $claims): self
     {
         $this->jwt->claims($claims);
 
@@ -249,7 +249,7 @@ class JWTGuard implements Guard
         return $this->getPayload();
     }
 
-    public function setToken(Token|string $token): static
+    public function setToken(Token|string $token): self
     {
         $this->jwt->setToken($token);
 
@@ -261,7 +261,7 @@ class JWTGuard implements Guard
         return $this->jwt->factory()->getTTL();
     }
 
-    public function setTTL(?int $ttl): static
+    public function setTTL(?int $ttl): self
     {
         $this->jwt->factory()->setTTL($ttl);
 
@@ -273,7 +273,7 @@ class JWTGuard implements Guard
         return $this->provider;
     }
 
-    public function setProvider(UserProvider $provider): static
+    public function setProvider(UserProvider $provider): self
     {
         $this->provider = $provider;
 
@@ -285,7 +285,7 @@ class JWTGuard implements Guard
         return $this->user;
     }
 
-    public function setUser(Authenticatable $user): static
+    public function setUser(Authenticatable $user): self
     {
         $result = $this->guardHelperSetUser($user);
 
@@ -299,7 +299,7 @@ class JWTGuard implements Guard
         return $this->request;
     }
 
-    public function setRequest(Request $request): static
+    public function setRequest(Request $request): self
     {
         $this->request = $request;
 

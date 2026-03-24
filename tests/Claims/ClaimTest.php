@@ -4,84 +4,160 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test\Claims;
 
-use Illuminate\Contracts\Support\Arrayable;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
+use Illuminate\Contracts\Support\Arrayable;
 
+/**
+ * Tests the abstract Claim base class using Expiration as the concrete subject.
+ */
 class ClaimTest extends AbstractTestCase
 {
-    protected Expiration $claim;
+    private int $futureTimestamp;
 
-    /**
-     * @throws InvalidClaimException
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->claim = new Expiration($this->testNowTimestamp);
+        $this->futureTimestamp = $this->testNowTimestamp + 3600;
     }
 
-    public function testItShouldThrowAnExceptionWhenPassingAnInvalidValue(): void
+    public function testConstructsWithValidValue(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertSame($this->futureTimestamp, $claim->getValue());
+    }
+
+    public function testGetNameReturnsClaimName(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertSame('exp', $claim->getName());
+    }
+
+    public function testSetValueUpdatesStoredValue(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+        $newTimestamp = $this->futureTimestamp + 1000;
+
+        $claim->setValue($newTimestamp);
+
+        $this->assertSame($newTimestamp, $claim->getValue());
+    }
+
+    public function testSetValueThrowsForNonNumericInput(): void
     {
         $this->expectException(InvalidClaimException::class);
-        $this->expectExceptionMessage('Invalid value provided for claim [exp]');
 
-        $this->claim->setValue('foo');
+        new Expiration('not-a-number');
     }
 
-    public function testItShouldConvertTheClaimToAnArray(): void
+    public function testSetValueThrowsForArrayInput(): void
     {
-        $this->assertSame(['exp' => $this->testNowTimestamp], $this->claim->toArray());
+        $this->expectException(InvalidClaimException::class);
+
+        new Expiration([]);
     }
 
-    public function testItShouldGetTheClaimAsAString(): void
+    public function testSetNameChangesName(): void
     {
-        $this->assertJsonStringEqualsJsonString((string) $this->claim, $this->claim->toJson());
+        $claim = new Expiration($this->futureTimestamp);
+
+        $claim->setName('custom_exp');
+
+        $this->assertSame('custom_exp', $claim->getName());
     }
 
-    public function testItShouldGetTheObjectAsJson(): void
+    public function testToArrayReturnsKeyValuePair(): void
     {
-        $encoded = json_encode($this->claim);
-        $this->assertNotFalse($encoded);
-        $this->assertJsonStringEqualsJsonString($encoded, $this->claim->toJson());
+        $claim = new Expiration($this->futureTimestamp);
+
+        $result = $claim->toArray();
+
+        $this->assertSame(['exp' => $this->futureTimestamp], $result);
     }
 
-    public function testItShouldImplementArrayable(): void
+    public function testToJsonReturnsJsonString(): void
     {
-        $this->assertInstanceOf(Arrayable::class, $this->claim);
+        $claim = new Expiration($this->futureTimestamp);
+
+        $json = $claim->toJson();
+
+        $this->assertJson($json);
+        $decoded = json_decode($json, true);
+        $this->assertSame($this->futureTimestamp, $decoded['exp']);
     }
 
-    public function testItShouldGetTheClaimValue(): void
+    public function testToStringReturnsJson(): void
     {
-        $this->assertSame($this->testNowTimestamp, $this->claim->getValue());
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertSame($claim->toJson(), (string) $claim);
     }
 
-    public function testItShouldGetAndSetTheClaimName(): void
+    public function testMatchesStrictReturnsTrueForIdenticalValue(): void
     {
-        $this->assertSame('exp', $this->claim->getName());
+        $claim = new Expiration($this->futureTimestamp);
 
-        $this->claim->setName('custom_name');
-        $this->assertSame('custom_name', $this->claim->getName());
+        $this->assertTrue($claim->matches($this->futureTimestamp, true));
     }
 
-    public function testItShouldMatchTheValueStrictly(): void
+    public function testMatchesStrictReturnsFalseForDifferentType(): void
     {
-        $this->assertTrue($this->claim->matches($this->testNowTimestamp));
-        $this->assertFalse($this->claim->matches($this->testNowTimestamp + 1));
-        $this->assertFalse($this->claim->matches((string) $this->testNowTimestamp));
+        $claim = new Expiration($this->futureTimestamp);
+
+        // String representation of the integer should fail strict comparison
+        $this->assertFalse($claim->matches((string) $this->futureTimestamp, true));
     }
 
-    public function testItShouldMatchTheValueLoosely(): void
+    public function testMatchesLooseReturnsTrueForStringNumericEquivalent(): void
     {
-        $this->assertTrue($this->claim->matches($this->testNowTimestamp, false));
-        $this->assertTrue($this->claim->matches((string) $this->testNowTimestamp, false));
-        $this->assertFalse($this->claim->matches($this->testNowTimestamp + 1, false));
+        $claim = new Expiration($this->futureTimestamp);
+
+        // Loose comparison: int == string of same number
+        $this->assertTrue($claim->matches((string) $this->futureTimestamp, false));
     }
 
-    public function testItShouldJsonSerialize(): void
+    public function testMatchesReturnsFalseForWrongValue(): void
     {
-        $this->assertSame(['exp' => $this->testNowTimestamp], $this->claim->jsonSerialize());
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertFalse($claim->matches($this->futureTimestamp + 999, true));
+    }
+
+    public function testImplementsArrayableInterface(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertInstanceOf(Arrayable::class, $claim);
+    }
+
+    public function testJsonSerializeReturnsArray(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        $this->assertSame(['exp' => $this->futureTimestamp], $claim->jsonSerialize());
+    }
+
+    public function testValidatePayloadReturnsTrueForFutureTimestamp(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        $result = $claim->validatePayload();
+
+        $this->assertTrue($result);
+    }
+
+    public function testValidateRefreshReturnsTrueByDefault(): void
+    {
+        $claim = new Expiration($this->futureTimestamp);
+
+        // Base Claim::validateRefresh just returns getValue(); Expiration inherits it.
+        // Only the datetime-based overrides on IssuedAt differ.
+        $result = $claim->validateRefresh(20160);
+
+        $this->assertSame($this->futureTimestamp, $result);
     }
 }

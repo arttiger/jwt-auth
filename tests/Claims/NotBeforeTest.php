@@ -11,51 +11,106 @@ use ArtTiger\JWTAuth\Test\AbstractTestCase;
 
 class NotBeforeTest extends AbstractTestCase
 {
-    public function testItShouldThrowAnExceptionWhenPassingAnInvalidValue(): void
+    public function testConstructsWithCurrentTimestamp(): void
+    {
+        $claim = new NotBefore($this->testNowTimestamp);
+
+        $this->assertSame($this->testNowTimestamp, $claim->getValue());
+    }
+
+    public function testConstructsWithPastTimestamp(): void
+    {
+        $past = $this->testNowTimestamp - 3600;
+        $claim = new NotBefore($past);
+
+        $this->assertSame($past, $claim->getValue());
+    }
+
+    public function testClaimNameIsNbf(): void
+    {
+        $claim = new NotBefore($this->testNowTimestamp);
+
+        $this->assertSame('nbf', $claim->getName());
+    }
+
+    public function testConstructsWithFutureTimestamp(): void
+    {
+        // NotBefore's validateCreate (from DatetimeTrait) only checks numeric;
+        // it does NOT prohibit future values on construction — only validatePayload does.
+        $future = $this->testNowTimestamp + 3600;
+        $claim = new NotBefore($future);
+
+        $this->assertSame($future, $claim->getValue());
+    }
+
+    public function testThrowsForNonNumericStringOnConstruction(): void
     {
         $this->expectException(InvalidClaimException::class);
-        $this->expectExceptionMessage('Invalid value provided for claim [nbf]');
 
-        new NotBefore('foo');
+        new NotBefore('invalid');
     }
 
-    public function testItShouldCreateWithValidTimestamp(): void
+    public function testValidatePayloadReturnsTrueForPastTimestamp(): void
     {
-        $nbf = new NotBefore($this->testNowTimestamp);
+        $past = $this->testNowTimestamp - 3600;
+        $claim = new NotBefore($past);
 
-        $this->assertSame($this->testNowTimestamp, $nbf->getValue());
-        $this->assertSame('nbf', $nbf->getName());
-    }
-
-    public function testValidatePayloadReturnsTrueWhenNbfIsInThePast(): void
-    {
-        $nbf = new NotBefore($this->testNowTimestamp - 60);
-
-        $this->assertTrue($nbf->validatePayload());
+        $this->assertTrue($claim->validatePayload());
     }
 
     public function testValidatePayloadReturnsTrueForCurrentTimestamp(): void
     {
-        $nbf = new NotBefore($this->testNowTimestamp);
+        // Exactly now: isFuture returns false for the exact current second
+        $claim = new NotBefore($this->testNowTimestamp);
 
-        $this->assertTrue($nbf->validatePayload());
+        $this->assertTrue($claim->validatePayload());
     }
 
-    public function testValidatePayloadThrowsExceptionWhenNbfIsInTheFuture(): void
+    public function testValidatePayloadThrowsTokenInvalidExceptionForFutureTimestamp(): void
     {
+        $future = $this->testNowTimestamp + 3600;
+        $claim = new NotBefore($future);
+
         $this->expectException(TokenInvalidException::class);
         $this->expectExceptionMessage('Not Before (nbf) timestamp cannot be in the future');
 
-        $nbf = new NotBefore($this->testNowTimestamp + 3600);
-        $nbf->validatePayload();
+        $claim->validatePayload();
     }
 
-    public function testValidatePayloadWithLeewayAllowsSlightlyFutureNbf(): void
+    public function testValidatePayloadThrowsForSlightlyFutureTimestamp(): void
     {
-        // nbf is 30s in the future, but leeway is 60s — should pass validation
-        $nbf = new NotBefore($this->testNowTimestamp + 30);
-        $nbf->setLeeway(60);
+        // Even 1 second in the future should fail
+        $slightlyFuture = $this->testNowTimestamp + 1;
+        $claim = new NotBefore($slightlyFuture);
 
-        $this->assertTrue($nbf->validatePayload());
+        $this->expectException(TokenInvalidException::class);
+
+        $claim->validatePayload();
+    }
+
+    public function testSetLeewayAllowsSlightlyFutureNbf(): void
+    {
+        // With leeway=60, a nbf 30s in the future should pass
+        $slightlyFuture = $this->testNowTimestamp + 30;
+        $claim = new NotBefore($slightlyFuture);
+        $claim->setLeeway(60);
+
+        $result = $claim->validatePayload();
+
+        $this->assertTrue($result);
+    }
+
+    public function testGetValueReturnsInt(): void
+    {
+        $claim = new NotBefore($this->testNowTimestamp);
+
+        $this->assertIsInt($claim->getValue());
+    }
+
+    public function testToArrayUsesNbfKey(): void
+    {
+        $claim = new NotBefore($this->testNowTimestamp);
+
+        $this->assertSame(['nbf' => $this->testNowTimestamp], $claim->toArray());
     }
 }

@@ -35,7 +35,7 @@ abstract class Provider
         $this->keys = $keys;
     }
 
-    public function setAlgo(string $algo): static
+    public function setAlgo(string $algo): self
     {
         $this->algo = $algo;
 
@@ -47,7 +47,7 @@ abstract class Provider
         return $this->algo;
     }
 
-    public function setSecret(?string $secret): static
+    public function setSecret(?string $secret): self
     {
         $this->secret = $secret;
 
@@ -62,7 +62,7 @@ abstract class Provider
     /**
      * @param array<string, mixed> $keys
      */
-    public function setKeys(array $keys): static
+    public function setKeys(array $keys): self
     {
         $this->keys = $keys;
 

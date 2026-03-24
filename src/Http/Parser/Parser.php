@@ -47,7 +47,7 @@ class Parser
      *
      * @param ParserContract|ParserContract[] $parsers
      */
-    public function addParser(ParserContract|array $parsers): static
+    public function addParser(ParserContract|array $parsers): self
     {
         $this->chain = array_merge($this->chain, is_array($parsers) ? $parsers : [$parsers]);
 
@@ -59,7 +59,7 @@ class Parser
      *
      * @param ParserContract[] $chain
      */
-    public function setChain(array $chain): static
+    public function setChain(array $chain): self
     {
         $this->chain = $chain;
 
@@ -71,7 +71,7 @@ class Parser
      *
      * @param ParserContract[] $chain
      */
-    public function setChainOrder(array $chain): static
+    public function setChainOrder(array $chain): self
     {
         return $this->setChain($chain);
     }
@@ -102,7 +102,7 @@ class Parser
     /**
      * Set the request instance.
      */
-    public function setRequest(Request $request): static
+    public function setRequest(Request $request): self
     {
         $this->request = $request;
 

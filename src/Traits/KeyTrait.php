@@ -11,7 +11,7 @@ trait KeyTrait
     /**
      * Set the key to use for parsing tokens.
      */
-    public function setKey(string $key): static
+    public function setKey(string $key): self
     {
         $this->key = $key;
 

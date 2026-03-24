@@ -38,7 +38,7 @@ class Collection extends IlluminateCollection
     /**
      * Validate each claim under a given context ('payload' or 'refresh').
      */
-    public function validate(string $context = 'payload'): static
+    public function validate(string $context = 'payload'): self
     {
         $args = func_get_args();
         array_shift($args);

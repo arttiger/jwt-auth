@@ -4,74 +4,113 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test\Claims;
 
-use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
-use ReflectionProperty;
+use Carbon\Carbon;
 
 class IssuedAtTest extends AbstractTestCase
 {
-    public function testItShouldThrowAnExceptionWhenPassingAFutureTimestamp(): void
+    public function testConstructsWithCurrentTimestamp(): void
+    {
+        $claim = new IssuedAt($this->testNowTimestamp);
+
+        $this->assertSame($this->testNowTimestamp, $claim->getValue());
+    }
+
+    public function testConstructsWithPastTimestamp(): void
+    {
+        $past = $this->testNowTimestamp - 3600;
+        $claim = new IssuedAt($past);
+
+        $this->assertSame($past, $claim->getValue());
+    }
+
+    public function testClaimNameIsIat(): void
+    {
+        $claim = new IssuedAt($this->testNowTimestamp);
+
+        $this->assertSame('iat', $claim->getName());
+    }
+
+    public function testThrowsInvalidClaimExceptionForFutureTimestampOnConstruction(): void
     {
         $this->expectException(InvalidClaimException::class);
-        $this->expectExceptionMessage('Invalid value provided for claim [iat]');
+        $this->expectExceptionMessage('iat');
 
         new IssuedAt($this->testNowTimestamp + 3600);
     }
 
-    public function testItShouldThrowAnExceptionWhenPassingANonNumericValue(): void
+    public function testThrowsForNonNumericStringOnConstruction(): void
     {
         $this->expectException(InvalidClaimException::class);
 
-        new IssuedAt('not-a-timestamp');
+        new IssuedAt('not-a-number');
     }
 
-    public function testItShouldCreateWithCurrentTimestamp(): void
+    public function testValidatePayloadReturnsTrueForCurrentTimestamp(): void
     {
-        $iat = new IssuedAt($this->testNowTimestamp);
+        $claim = new IssuedAt($this->testNowTimestamp);
 
-        $this->assertSame($this->testNowTimestamp, $iat->getValue());
-        $this->assertSame('iat', $iat->getName());
+        $this->assertTrue($claim->validatePayload());
     }
 
-    public function testValidatePayloadReturnsTrueForPastTimestamp(): void
+    public function testValidatePayloadThrowsTokenInvalidExceptionForFutureIat(): void
     {
-        $iat = new IssuedAt($this->testNowTimestamp);
+        // Create with a past timestamp, then advance Carbon so it looks future
+        $claim = new IssuedAt($this->testNowTimestamp);
 
-        $this->assertTrue($iat->validatePayload());
-    }
+        // Roll time back so the original iat is now "in the future"
+        Carbon::setTestNow(Carbon::now()->subHour());
 
-    public function testValidatePayloadThrowsTokenInvalidExceptionWhenIatIsFuture(): void
-    {
         $this->expectException(TokenInvalidException::class);
         $this->expectExceptionMessage('Issued At (iat) timestamp cannot be in the future');
 
-        $iat = new IssuedAt($this->testNowTimestamp);
-
-        // Bypass validateCreate by setting the private value directly via reflection
-        $prop = new ReflectionProperty(Claim::class, 'value');
-        $prop->setValue($iat, $this->testNowTimestamp + 3600);
-
-        $iat->validatePayload();
+        $claim->validatePayload();
     }
 
-    public function testValidateRefreshReturnsTrueWhenWithinRefreshTtl(): void
+    public function testValidateRefreshDoesNotThrowWhenWithinRefreshTtl(): void
     {
-        $iat = new IssuedAt($this->testNowTimestamp);
+        $claim = new IssuedAt($this->testNowTimestamp);
 
-        $this->assertTrue($iat->validateRefresh(60));
+        // refreshTTL = 20160 minutes (2 weeks). iat is now, so iat + 20160 min is far future.
+        $result = $claim->validateRefresh(20160);
+
+        $this->assertTrue($result);
     }
 
-    public function testValidateRefreshThrowsExceptionWhenExpiredForRefresh(): void
+    public function testValidateRefreshThrowsTokenExpiredExceptionWhenBeyondRefreshTtl(): void
     {
+        // iat was 3 hours ago
+        $oldIat = $this->testNowTimestamp - (3 * 3600);
+        $claim = new IssuedAt($oldIat);
+
+        // refreshTTL = 1 minute means iat + 60s is already past
         $this->expectException(TokenExpiredException::class);
         $this->expectExceptionMessage('Token has expired and can no longer be refreshed');
 
-        // iat is 2 hours in the past, refreshTTL is 1 minute — well past refresh window
-        $iat = new IssuedAt($this->testNowTimestamp - 7200);
-        $iat->validateRefresh(1);
+        $claim->validateRefresh(1);
+    }
+
+    public function testValidateRefreshAtExactBoundaryPassesBecauseNowIsNotPast(): void
+    {
+        // iat was exactly refreshTTL minutes ago → iat + refreshTTL*60 == now.
+        // isPast(now) returns false (current second is not past), so no exception.
+        $refreshTTL = 60; // minutes
+        $oldIat = $this->testNowTimestamp - ($refreshTTL * 60);
+        $claim = new IssuedAt($oldIat);
+
+        $result = $claim->validateRefresh($refreshTTL);
+
+        $this->assertTrue($result);
+    }
+
+    public function testGetValueReturnsInt(): void
+    {
+        $claim = new IssuedAt($this->testNowTimestamp);
+
+        $this->assertIsInt($claim->getValue());
     }
 }

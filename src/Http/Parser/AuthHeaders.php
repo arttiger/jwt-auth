@@ -53,7 +53,7 @@ class AuthHeaders implements ParserContract
     /**
      * Set the header name.
      */
-    public function setHeaderName(string $headerName): static
+    public function setHeaderName(string $headerName): self
     {
         $this->header = $headerName;
 
@@ -63,7 +63,7 @@ class AuthHeaders implements ParserContract
     /**
      * Set the header prefix.
      */
-    public function setHeaderPrefix(string $headerPrefix): static
+    public function setHeaderPrefix(string $headerPrefix): self
     {
         $this->prefix = $headerPrefix;
 

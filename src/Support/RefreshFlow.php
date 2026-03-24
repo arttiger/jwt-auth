@@ -14,7 +14,7 @@ trait RefreshFlow
     /**
      * Set the refresh flow flag.
      */
-    public function setRefreshFlow(bool $refreshFlow = true): static
+    public function setRefreshFlow(bool $refreshFlow = true): self
     {
         $this->refreshFlow = $refreshFlow;
 

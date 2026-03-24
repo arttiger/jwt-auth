@@ -69,7 +69,7 @@ class Factory
     /**
      * Empty the claims collection.
      */
-    public function emptyClaims(): static
+    public function emptyClaims(): self
     {
         $this->claims = new BaseCollection();
 
@@ -81,7 +81,7 @@ class Factory
      *
      * @param array<string, mixed> $claims
      */
-    protected function addClaims(array $claims): static
+    protected function addClaims(array $claims): self
     {
         foreach ($claims as $name => $value) {
             $this->addClaim($name, $value);
@@ -93,7 +93,7 @@ class Factory
     /**
      * Add a claim to the Payload.
      */
-    protected function addClaim(string $name, mixed $value): static
+    protected function addClaim(string $name, mixed $value): self
     {
         $this->claims->put($name, $value);
 
@@ -103,7 +103,7 @@ class Factory
     /**
      * Build the default claims.
      */
-    protected function buildClaims(): static
+    protected function buildClaims(): self
     {
         // Remove exp claim when TTL is null (non-expiring tokens)
         if ($this->claimFactory->getTTL() === null) {
@@ -149,14 +149,14 @@ class Factory
     /**
      * @param string[] $claims
      */
-    public function setDefaultClaims(array $claims): static
+    public function setDefaultClaims(array $claims): self
     {
         $this->defaultClaims = $claims;
 
         return $this;
     }
 
-    public function setTTL(?int $ttl): static
+    public function setTTL(?int $ttl): self
     {
         $this->claimFactory->setTTL($ttl);
 
@@ -189,7 +189,7 @@ class Factory
      *
      * @param array<mixed> $parameters
      */
-    public function __call(string $method, array $parameters): static
+    public function __call(string $method, array $parameters): self
     {
         $this->addClaim($method, $parameters[0]);
 

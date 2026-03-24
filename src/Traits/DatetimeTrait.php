@@ -6,6 +6,8 @@ namespace ArtTiger\JWTAuth\Traits;
 
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Support\Utils;
+use DateInterval;
+use DateTimeInterface;
 
 trait DatetimeTrait
 {
@@ -16,11 +18,11 @@ trait DatetimeTrait
      */
     public function setValue(mixed $value): static
     {
-        if ($value instanceof \DateInterval) {
+        if ($value instanceof DateInterval) {
             $value = Utils::now()->add($value);
         }
 
-        if ($value instanceof \DateTimeInterface) {
+        if ($value instanceof DateTimeInterface) {
             $value = $value->getTimestamp();
         }
 
@@ -46,7 +48,7 @@ trait DatetimeTrait
         return Utils::isPast($value, $this->leeway);
     }
 
-    public function setLeeway(int $leeway): static
+    public function setLeeway(int $leeway): self
     {
         $this->leeway = $leeway;
 

@@ -139,7 +139,7 @@ class Blacklist
     /**
      * Set the grace period.
      */
-    public function setGracePeriod(int $gracePeriod): static
+    public function setGracePeriod(int $gracePeriod): self
     {
         $this->gracePeriod = $gracePeriod;
 
@@ -167,7 +167,7 @@ class Blacklist
     /**
      * Set the unique key held within the blacklist.
      */
-    public function setKey(string $key): static
+    public function setKey(string $key): self
     {
         $this->key = $key;
 
@@ -177,7 +177,7 @@ class Blacklist
     /**
      * Set the refresh time limit.
      */
-    public function setRefreshTTL(int $ttl): static
+    public function setRefreshTTL(int $ttl): self
     {
         $this->refreshTTL = $ttl;
 

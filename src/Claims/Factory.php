@@ -101,21 +101,21 @@ class Factory
      * @param non-empty-string       $name
      * @param class-string<Claim>    $classPath
      */
-    public function extend(string $name, string $classPath): static
+    public function extend(string $name, string $classPath): self
     {
         $this->classMap[$name] = $classPath;
 
         return $this;
     }
 
-    public function setRequest(Request $request): static
+    public function setRequest(Request $request): self
     {
         $this->request = $request;
 
         return $this;
     }
 
-    public function setTTL(?int $ttl): static
+    public function setTTL(?int $ttl): self
     {
         $this->ttl = $ttl;
 
@@ -127,7 +127,7 @@ class Factory
         return $this->ttl;
     }
 
-    public function setLeeway(int $leeway): static
+    public function setLeeway(int $leeway): self
     {
         $this->leeway = $leeway;
 

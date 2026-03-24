@@ -14,7 +14,7 @@ trait CustomClaims
     /**
      * @param array<string, mixed> $customClaims
      */
-    public function customClaims(array $customClaims): static
+    public function customClaims(array $customClaims): self
     {
         $this->customClaims = $customClaims;
 
@@ -24,7 +24,7 @@ trait CustomClaims
     /**
      * @param array<string, mixed> $customClaims
      */
-    public function claims(array $customClaims): static
+    public function claims(array $customClaims): self
     {
         return $this->customClaims($customClaims);
     }

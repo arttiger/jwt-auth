@@ -189,7 +189,7 @@ class Manager
     /**
      * Set whether the blacklist is enabled.
      */
-    public function setBlacklistEnabled(bool $enabled): static
+    public function setBlacklistEnabled(bool $enabled): self
     {
         $this->blacklistEnabled = $enabled;
 
@@ -200,7 +200,7 @@ class Manager
      * Configuration to set up if show the TokenBlacklistedException
      * can be throwable or not.
      */
-    public function setBlackListExceptionEnabled(bool $showBlackListException = true): static
+    public function setBlackListExceptionEnabled(bool $showBlackListException = true): self
     {
         $this->showBlackListException = $showBlackListException;
 
@@ -221,7 +221,7 @@ class Manager
     /**
      * @param string[] $claims
      */
-    public function setPersistentClaims(array $claims): static
+    public function setPersistentClaims(array $claims): self
     {
         $this->persistentClaims = $claims;
 
@@ -231,7 +231,7 @@ class Manager
     /**
      * Set whether the refresh iat is enabled.
      */
-    public function setRefreshIat(bool $refreshIat): static
+    public function setRefreshIat(bool $refreshIat): self
     {
         $this->refreshIat = $refreshIat;
 

@@ -109,7 +109,7 @@ class PayloadValidator extends Validator
      *
      * @param string[] $claims
      */
-    public function setRequiredClaims(array $claims): static
+    public function setRequiredClaims(array $claims): self
     {
         $this->requiredClaims = $claims;
 
@@ -119,7 +119,7 @@ class PayloadValidator extends Validator
     /**
      * Set the refresh TTL in minutes.
      */
-    public function setRefreshTTL(?int $ttl): static
+    public function setRefreshTTL(?int $ttl): self
     {
         $this->refreshTTL = $ttl;
 

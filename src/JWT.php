@@ -79,7 +79,7 @@ class JWT
     /**
      * Invalidate a token (add it to the blacklist).
      */
-    public function invalidate(bool $forceForever = false): static
+    public function invalidate(bool $forceForever = false): self
     {
         $token = $this->requireToken();
 
@@ -134,7 +134,7 @@ class JWT
      *
      * @throws JWTException
      */
-    public function parseToken(): static
+    public function parseToken(): self
     {
         if (! $token = $this->parser->parseToken()) {
             throw new JWTException('The token could not be parsed from the request');
@@ -222,14 +222,14 @@ class JWT
         return $this->hashSubjectModel($model) === $prv;
     }
 
-    public function setToken(Token|string $token): static
+    public function setToken(Token|string $token): self
     {
         $this->token = $token instanceof Token ? $token : new Token($token);
 
         return $this;
     }
 
-    public function unsetToken(): static
+    public function unsetToken(): self
     {
         $this->token = null;
 
@@ -248,14 +248,14 @@ class JWT
         return $this->token;
     }
 
-    public function setRequest(Request $request): static
+    public function setRequest(Request $request): self
     {
         $this->parser->setRequest($request);
 
         return $this;
     }
 
-    public function lockSubject(bool $lock): static
+    public function lockSubject(bool $lock): self
     {
         $this->lockSubject = $lock;
 
