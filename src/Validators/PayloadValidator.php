@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Validators;
 
 use ArtTiger\JWTAuth\Abstracts\Validator;
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
@@ -42,7 +42,7 @@ class PayloadValidator extends Validator
         // but since the contract requires array<mixed>, we receive a Collection
         // which extends Illuminate Collection and is iterable.
         // The actual Collection is passed from Payload::__construct.
-        /** @var Collection $claims */
+        /** @var ClaimCollection $claims */
         $claims = $value[0] ?? $value;
 
         $this->validateStructure($claims);
@@ -59,7 +59,7 @@ class PayloadValidator extends Validator
      *
      * @throws TokenInvalidException
      */
-    public function validateCollection(Collection $claims): void
+    public function validateCollection(ClaimCollection $claims): void
     {
         $this->validateStructure($claims);
 
@@ -75,7 +75,7 @@ class PayloadValidator extends Validator
      *
      * @throws TokenInvalidException
      */
-    protected function validateStructure(Collection $claims): void
+    protected function validateStructure(ClaimCollection $claims): void
     {
         if ($this->requiredClaims && ! $claims->hasAllClaims($this->requiredClaims)) {
             throw new TokenInvalidException(message: 'JWT payload does not contain the required claims');
@@ -88,7 +88,7 @@ class PayloadValidator extends Validator
      * @throws TokenInvalidException
      * @throws TokenExpiredException
      */
-    protected function validatePayload(Collection $claims): void
+    protected function validatePayload(ClaimCollection $claims): void
     {
         $claims->validate('payload');
     }
@@ -98,7 +98,7 @@ class PayloadValidator extends Validator
      *
      * @throws TokenExpiredException
      */
-    protected function validateRefresh(Collection $claims): void
+    protected function validateRefresh(ClaimCollection $claims): void
     {
         if ($this->refreshTTL !== null) {
             $claims->validate('refresh', $this->refreshTTL);

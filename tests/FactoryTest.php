@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test;
 
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Claims\Custom;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
@@ -49,7 +50,7 @@ class FactoryTest extends AbstractTestCase
 
                 return match ($name) {
                     'sub' => new Subject($strVal),
-                    default => new \ArtTiger\JWTAuth\Claims\Custom($name, $value),
+                    default => new Custom($name, $value),
                 };
             }
         );
@@ -166,7 +167,7 @@ class FactoryTest extends AbstractTestCase
         $this->claimFactory->shouldReceive('make')->with('jti')->andReturn(new \ArtTiger\JWTAuth\Claims\JwtId('test-jti'));
         $this->claimFactory->shouldReceive('get')
             ->with('role', 'admin')
-            ->andReturn(new \ArtTiger\JWTAuth\Claims\Custom('role', 'admin'));
+            ->andReturn(new Custom('role', 'admin'));
 
         $this->factory->__call('role', ['admin']);
         $collection = $this->factory->buildClaimsCollection();
@@ -203,7 +204,7 @@ class FactoryTest extends AbstractTestCase
         $this->claimFactory->shouldReceive('make')->with('nbf')->andReturn(new NotBefore($now));
         $this->claimFactory->shouldReceive('make')->with('jti')->andReturn(new JwtId('test-jti'));
         $this->claimFactory->shouldReceive('get')->andReturnUsing(
-            fn (string $name, mixed $value) => new \ArtTiger\JWTAuth\Claims\Custom($name, $value)
+            fn (string $name, mixed $value) => new Custom($name, $value)
         );
 
         $this->validator->shouldReceive('setRefreshFlow')->andReturnSelf();
@@ -228,6 +229,6 @@ class FactoryTest extends AbstractTestCase
 
         $collection = $this->factory->buildClaimsCollection();
 
-        $this->assertInstanceOf(Collection::class, $collection);
+        $this->assertInstanceOf(ClaimCollection::class, $collection);
     }
 }

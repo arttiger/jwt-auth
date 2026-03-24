@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace ArtTiger\JWTAuth\Claims;
+namespace ArtTiger\JWTAuth\Collections;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
-use Illuminate\Support\Collection as IlluminateCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * @extends IlluminateCollection<string, Claim>
+ * @extends Collection<array-key, Claim|non-empty-string>
  */
-class Collection extends IlluminateCollection
+class ClaimCollection extends Collection
 {
     /**
-     * @param iterable<mixed>|array<mixed> $items
+     * @param array<array-key, Claim|non-empty-string> $items
      */
-    public function __construct(mixed $items = [])
+    public function __construct(array $items = [])
     {
         parent::__construct($this->getArrayableItems($items));
     }

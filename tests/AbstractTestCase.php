@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test;
 
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
 use ArtTiger\JWTAuth\Claims\Issuer;
@@ -39,8 +40,8 @@ abstract class AbstractTestCase extends TestCase
      * Build a string-keyed array of Claim instances suitable for
      * passing directly to `new Collection([...])`.
      *
-     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim> $overrides  Claim instances to replace defaults.
-     * @return array<string, \ArtTiger\JWTAuth\Abstracts\Claim>
+     * @param array<string, Claim> $overrides  Claim instances to replace defaults.
+     * @return array<string, Claim>
      */
     protected function makeValidClaims(array $overrides = []): array
     {
@@ -65,10 +66,10 @@ abstract class AbstractTestCase extends TestCase
     /**
      * Build a Collection from the valid claim set, with optional overrides.
      *
-     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim> $overrides
+     * @param array<string, Claim> $overrides
      */
-    protected function makeValidCollection(array $overrides = []): Collection
+    protected function makeValidCollection(array $overrides = []): ClaimCollection
     {
-        return new Collection($this->makeValidClaims($overrides));
+        return new ClaimCollection($this->makeValidClaims($overrides));
     }
 }

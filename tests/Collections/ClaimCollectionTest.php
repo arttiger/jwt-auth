@@ -2,26 +2,24 @@
 
 declare(strict_types=1);
 
-namespace ArtTiger\JWTAuth\Test\Claims;
+namespace ArtTiger\JWTAuth\Test\Collections;
 
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
 use ArtTiger\JWTAuth\Claims\Issuer;
-use ArtTiger\JWTAuth\Claims\JwtId;
-use ArtTiger\JWTAuth\Claims\NotBefore;
 use ArtTiger\JWTAuth\Claims\Subject;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
 
-class CollectionTest extends AbstractTestCase
+class ClaimCollectionTest extends AbstractTestCase
 {
     public function testConstructsWithStringKeyedClaimsAndPreservesKeys(): void
     {
         $sub = new Subject('1');
         $iss = new Issuer('https://example.com');
 
-        $collection = new Collection(['sub' => $sub, 'iss' => $iss]);
+        $collection = new ClaimCollection(['sub' => $sub, 'iss' => $iss]);
 
         $this->assertTrue($collection->has('sub'));
         $this->assertTrue($collection->has('iss'));
@@ -31,7 +29,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testConstructsWithEmptyArrayProducesEmptyCollection(): void
     {
-        $collection = new Collection([]);
+        $collection = new ClaimCollection([]);
 
         $this->assertCount(0, $collection);
     }
@@ -39,7 +37,7 @@ class CollectionTest extends AbstractTestCase
     public function testGetByClaimNameReturnsMatchingClaim(): void
     {
         $sub = new Subject('user-42');
-        $collection = new Collection(['sub' => $sub]);
+        $collection = new ClaimCollection(['sub' => $sub]);
 
         $result = $collection->getByClaimName('sub');
 
@@ -48,7 +46,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testGetByClaimNameReturnsNullForMissingClaim(): void
     {
-        $collection = new Collection(['sub' => new Subject('1')]);
+        $collection = new ClaimCollection(['sub' => new Subject('1')]);
 
         $result = $collection->getByClaimName('exp');
 
@@ -57,7 +55,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testGetByClaimNameReturnsNullForEmptyCollection(): void
     {
-        $collection = new Collection([]);
+        $collection = new ClaimCollection([]);
 
         $this->assertNull($collection->getByClaimName('sub'));
     }
@@ -71,7 +69,7 @@ class CollectionTest extends AbstractTestCase
 
     public function testHasAllClaimsReturnsFalseWhenOneIsMissing(): void
     {
-        $collection = new Collection(['sub' => new Subject('1')]);
+        $collection = new ClaimCollection(['sub' => new Subject('1')]);
 
         $this->assertFalse($collection->hasAllClaims(['sub', 'exp']));
     }
@@ -89,7 +87,7 @@ class CollectionTest extends AbstractTestCase
         // map() uses `new static(result)` which constructs a new Claims\Collection,
         // whose constructor runs sanitizeClaims() and drops all non-Claim values.
         // This is a known bug in the source: toPlainArray() always returns [].
-        $collection = new Collection([
+        $collection = new ClaimCollection([
             'sub' => new Subject('user-1'),
         ]);
 
@@ -102,7 +100,7 @@ class CollectionTest extends AbstractTestCase
     {
         // Since toPlainArray() is broken, use getByClaimName() to verify stored values.
         $now = $this->testNowTimestamp;
-        $collection = new Collection([
+        $collection = new ClaimCollection([
             'sub' => new Subject('user-1'),
             'iss' => new Issuer('https://example.com'),
             'iat' => new IssuedAt($now),
@@ -128,7 +126,7 @@ class CollectionTest extends AbstractTestCase
         // Should complete without exception
         $result = $collection->validate('payload');
 
-        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertInstanceOf(ClaimCollection::class, $result);
     }
 
     public function testValidateThrowsWhenExpiredExpirationClaimPresent(): void
@@ -136,7 +134,7 @@ class CollectionTest extends AbstractTestCase
         $this->expectException(TokenExpiredException::class);
 
         $pastExp = new Expiration($this->testNowTimestamp - 1);
-        $collection = new Collection(['exp' => $pastExp]);
+        $collection = new ClaimCollection(['exp' => $pastExp]);
 
         $collection->validate('payload');
     }
@@ -154,7 +152,7 @@ class CollectionTest extends AbstractTestCase
     {
         // Non-Claim entries in the constructor array are silently dropped
         $sub = new Subject('1');
-        $collection = new Collection([
+        $collection = new ClaimCollection([
             'sub' => $sub,
             'not_a_claim' => 'just a string',
         ]);
@@ -166,12 +164,12 @@ class CollectionTest extends AbstractTestCase
     public function testValidateCallsValidateRefreshWithArguments(): void
     {
         $iat = new IssuedAt($this->testNowTimestamp);
-        $collection = new Collection(['iat' => $iat]);
+        $collection = new ClaimCollection(['iat' => $iat]);
 
         // Large refreshTTL — should not throw
         $result = $collection->validate('refresh', 20160);
 
-        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertInstanceOf(ClaimCollection::class, $result);
     }
 
     public function testCollectionCountMatchesNumberOfClaims(): void

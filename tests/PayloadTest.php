@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test;
 
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Custom;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\Subject;
@@ -28,7 +29,7 @@ class PayloadTest extends AbstractTestCase
     /**
      * Use a mocked validator to bypass validation in unit tests.
      *
-     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     * @param array<string, Claim>|null $overrides
      */
     private function makePayload(?array $overrides = []): Payload
     {
@@ -142,9 +143,9 @@ class PayloadTest extends AbstractTestCase
         $this->assertFalse($this->payload->matchesStrict(['sub' => 1]));
     }
 
-    public function testGetClaimsReturnsCollectionInstance(): void
+    public function testGetClaimsReturnsClaimCollectionInstance(): void
     {
-        $this->assertInstanceOf(Collection::class, $this->payload->getClaims());
+        $this->assertInstanceOf(ClaimCollection::class, $this->payload->getClaims());
     }
 
     public function testGetClaimsContainsAllExpectedClaims(): void
@@ -260,7 +261,7 @@ class PayloadTest extends AbstractTestCase
         $validator->shouldReceive('setRefreshFlow')->andReturnSelf();
         $validator->shouldReceive('validateCollection')->andReturn(null);
 
-        $payload = new Payload(new Collection($customClaims), $validator);
+        $payload = new Payload(new ClaimCollection($customClaims), $validator);
 
         $roleClaim = $payload->getInternal('role');
 

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test\Validators;
 
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Claims\Issuer;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Expiration;
 use ArtTiger\JWTAuth\Claims\IssuedAt;
 use ArtTiger\JWTAuth\Claims\JwtId;
@@ -27,9 +29,9 @@ class PayloadValidatorTest extends AbstractTestCase
     }
 
     /**
-     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     * @param array<string, Claim>|null $overrides
      */
-    private function makeFullCollection(?array $overrides = []): Collection
+    private function makeFullCollection(?array $overrides = []): ClaimCollection
     {
         return $this->makeValidCollection($overrides ?? []);
     }
@@ -48,14 +50,14 @@ class PayloadValidatorTest extends AbstractTestCase
     {
         // Build a collection without 'sub'
         $claims = [
-            'iss' => new \ArtTiger\JWTAuth\Claims\Issuer('https://example.com'),
+            'iss' => new Issuer('https://example.com'),
             'iat' => new IssuedAt($this->testNowTimestamp),
             'exp' => new Expiration($this->testNowTimestamp + 3600),
             'nbf' => new NotBefore($this->testNowTimestamp),
             'jti' => new JwtId('test-id'),
             // sub is intentionally missing
         ];
-        $collection = new Collection($claims);
+        $collection = new ClaimCollection($claims);
 
         $this->expectException(TokenInvalidException::class);
         $this->expectExceptionMessage('JWT payload does not contain the required claims');
@@ -66,7 +68,7 @@ class PayloadValidatorTest extends AbstractTestCase
     public function testThrowsWhenMultipleRequiredClaimsAreMissing(): void
     {
         // Only have sub
-        $collection = new Collection(['sub' => new Subject('1')]);
+        $collection = new ClaimCollection(['sub' => new Subject('1')]);
 
         $this->expectException(TokenInvalidException::class);
 
@@ -99,7 +101,7 @@ class PayloadValidatorTest extends AbstractTestCase
     {
         // With empty required claims, even a collection with only one claim passes
         $this->validator->setRequiredClaims([]);
-        $collection = new Collection(['sub' => new Subject('1')]);
+        $collection = new ClaimCollection(['sub' => new Subject('1')]);
 
         // Should not throw — no required claims to check
         $this->validator->validateCollection($collection);
@@ -111,7 +113,7 @@ class PayloadValidatorTest extends AbstractTestCase
     {
         // Only require 'sub' — other missing claims should not trigger exception
         $this->validator->setRequiredClaims(['sub']);
-        $collection = new Collection(['sub' => new Subject('user-1')]);
+        $collection = new ClaimCollection(['sub' => new Subject('user-1')]);
 
         // Should not throw
         $this->validator->validateCollection($collection);

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use Stringable;
 use BadMethodCallException;
 use ArrayAccess;
 use ArtTiger\JWTAuth\Abstracts\Claim;
-use ArtTiger\JWTAuth\Claims\Collection;
 use ArtTiger\JWTAuth\Exceptions\PayloadException;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
 use Countable;
@@ -24,12 +24,12 @@ use JsonSerializable;
  */
 class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerializable, Stringable
 {
-    private readonly Collection $claims;
+    private ClaimCollection $claims;
 
     /**
      * Build the Payload.
      */
-    public function __construct(Collection $claims, PayloadValidator $validator, bool $refreshFlow = false)
+    public function __construct(ClaimCollection $claims, PayloadValidator $validator, bool $refreshFlow = false)
     {
         $validator->setRefreshFlow($refreshFlow)->validateCollection($claims);
         $this->claims = $claims;
@@ -38,7 +38,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
     /**
      * Get the collection of claim instances.
      */
-    public function getClaims(): Collection
+    public function getClaims(): ClaimCollection
     {
         return $this->claims;
     }

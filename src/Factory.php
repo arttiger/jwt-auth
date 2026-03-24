@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
-use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Collections\ClaimCollection;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
 use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Support\CustomClaims;
@@ -118,7 +118,7 @@ class Factory
         return $this->addClaims($this->getCustomClaims());
     }
 
-    protected function resolveClaims(): Collection
+    protected function resolveClaims(): ClaimCollection
     {
         $items = [];
 
@@ -128,15 +128,15 @@ class Factory
                 : $this->claimFactory->get($name, $value);
         }
 
-        return new Collection($items);
+        return new ClaimCollection($items);
     }
 
-    public function buildClaimsCollection(): Collection
+    public function buildClaimsCollection(): ClaimCollection
     {
         return $this->buildClaims()->resolveClaims();
     }
 
-    public function withClaims(Collection $claims): Payload
+    public function withClaims(ClaimCollection $claims): Payload
     {
         return new Payload($claims, $this->validator, $this->refreshFlow);
     }
