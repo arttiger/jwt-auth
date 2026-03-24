@@ -259,7 +259,7 @@ abstract class ServiceProvider extends BaseServiceProvider
                 throw new RuntimeException(message: 'Manager not resolved.');
             }
 
-            $parser = $app->make(Parser::class);
+            $parser = $app->make('arttiger.jwt.parser');
             if (! ($parser instanceof Parser)) {
                 throw new RuntimeException(message: 'Parser not resolved.');
             }
@@ -282,7 +282,7 @@ abstract class ServiceProvider extends BaseServiceProvider
                 throw new RuntimeException(message: 'Auth provider not resolved.');
             }
 
-            $parser = $app->make(Parser::class);
+            $parser = $app->make('arttiger.jwt.parser');
             if (! ($parser instanceof Parser)) {
                 throw new RuntimeException(message: 'Parser not resolved.');
             }
