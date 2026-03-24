@@ -46,17 +46,12 @@ class JWTGuard implements Guard
      */
     protected string $name = 'arttiger.jwt';
 
-    public function __construct(/**
-     * The JWT instance.
-     */
-    protected JWT $jwt, UserProvider $provider, /**
-     * The request instance.
-     */
-    protected Request $request, /**
-     * The event dispatcher instance.
-     */
-    protected Dispatcher $events)
-    {
+    public function __construct(
+        protected JWT $jwt,
+        UserProvider $provider,
+        protected Request $request,
+        protected Dispatcher $events,
+    ) {
         $this->provider = $provider;
     }
 
@@ -67,9 +62,10 @@ class JWTGuard implements Guard
         }
 
         if (
-            ($payload = $this->jwt->check(true)) instanceof Payload
+            # order make sense!
+            $this->jwt->setRequest($this->request)->getToken() instanceof Token
+            && ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
-            && $this->jwt->setRequest($this->request)->getToken() instanceof Token
         ) {
             return $this->user = $this->provider->retrieveById($payload['sub']);
         }
@@ -86,9 +82,10 @@ class JWTGuard implements Guard
         }
 
         if (
-            ($payload = $this->jwt->check(true)) instanceof Payload
+            # order make sense!
+            $this->jwt->setRequest($this->request)->getToken() instanceof Token
+            && ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
-            && $this->jwt->setRequest($this->request)->getToken() instanceof Token
         ) {
             $sub = $payload->get('sub');
 
@@ -108,7 +105,7 @@ class JWTGuard implements Guard
      */
     public function userOrFail(): Authenticatable
     {
-        if (!($user = $this->user()) instanceof Authenticatable) {
+        if (! ($user = $this->user()) instanceof Authenticatable) {
             throw new UserNotDefinedException();
         }
 

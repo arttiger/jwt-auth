@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Test;
 
+use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Factory;
 use ArtTiger\JWTAuth\Http\Parser\Parser;
@@ -36,7 +37,7 @@ class JWTTest extends AbstractTestCase
     }
 
     /**
-     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     * @param array<string, Claim>|null $overrides
      */
     private function makePayload(?array $overrides = []): Payload
     {
@@ -54,6 +55,7 @@ class JWTTest extends AbstractTestCase
 
     public function testFromUserReturnTokenString(): void
     {
+        dd($this->jwt);
         $user = new UserStub();
         $payload = $this->makePayload();
         $factory = Mockery::mock(Factory::class);

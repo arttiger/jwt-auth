@@ -33,16 +33,7 @@ class JWT
      *
      * @return void
      */
-    public function __construct(
-        /**
-         * The authentication manager.
-         */
-        protected Manager $manager,
-        /**
-         * The HTTP parser.
-         */
-        protected Parser $parser
-    )
+    public function __construct(protected Manager $manager, protected Parser $parser)
     {
     }
 

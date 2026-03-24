@@ -10,19 +10,22 @@ use ArtTiger\JWTAuth\Support\Utils;
 
 class Blacklist
 {
-    /** Grace period when a token is blacklisted, in seconds. */
+    /**
+     * Grace period when a token is blacklisted, in seconds.
+     */
     protected int $gracePeriod = 0;
 
-    /** Number of minutes from issue date in which a JWT can be refreshed. */
+    /**
+     * Number of minutes from issue date in which a JWT can be refreshed.
+     */
     protected int $refreshTTL = 20160;
 
-    /** The unique key held within the blacklist (defaults to jti claim). */
+    /**
+     * The unique key held within the blacklist (defaults to jti claim).
+     */
     protected string $key = ClaimName::JwtId->value;
 
-    public function __construct(
-        /** The storage. */
-        protected Storage $storage
-    )
+    public function __construct(protected Storage $storage)
     {
     }
 

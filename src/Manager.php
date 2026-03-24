@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
-use ArtTiger\JWTAuth\Contracts\Providers\JWT as JWTContract;
+use ArtTiger\JWTAuth\Contracts\Providers\JWT;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Exceptions\TokenBlacklistedException;
 use ArtTiger\JWTAuth\Support\CustomClaims;
@@ -44,20 +44,10 @@ class Manager
      * @return void
      */
     public function __construct(
-        /**
-         * The provider.
-         */
-        protected JWTContract $provider,
-        /**
-         * The blacklist.
-         */
+        protected JWT $provider,
         protected Blacklist $blacklist,
-        /**
-         * the payload factory.
-         */
-        protected Factory $payloadFactory
-    )
-    {
+        protected Factory $payloadFactory,
+    ) {
     }
 
     /**
@@ -123,7 +113,7 @@ class Manager
      */
     public function invalidate(Token $token, bool $forceForever = false): bool
     {
-        if (!$this->blacklistEnabled) {
+        if (! $this->blacklistEnabled) {
             throw new JWTException(message: 'You must have the blacklist enabled to invalidate a token.');
         }
 
@@ -168,7 +158,7 @@ class Manager
     /**
      * Get the JWTProvider instance.
      */
-    public function getJWTProvider(): JWTContract
+    public function getJWTProvider(): JWT
     {
         return $this->provider;
     }

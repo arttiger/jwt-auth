@@ -25,13 +25,15 @@ class FactoryTest extends AbstractTestCase
     {
         parent::setUp();
 
-        $request = Request::create('https://example.com/api/token', 'GET');
+        $request = Request::create('https://example.com/api/token');
         $this->factory = new Factory($request);
     }
 
     public function testGetReturnsIssuerClaimForIssName(): void
     {
         $claim = $this->factory->get('iss', 'https://example.com');
+        $this->factory->extend('guard', Custom::class);
+        dd($this->factory);
 
         $this->assertInstanceOf(Issuer::class, $claim);
         $this->assertSame('https://example.com', $claim->getValue());

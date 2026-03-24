@@ -11,7 +11,6 @@ use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Support\CustomClaims;
 use ArtTiger\JWTAuth\Support\RefreshFlow;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
-use Illuminate\Support\Collection as BaseCollection;
 
 class Factory
 {
@@ -33,20 +32,12 @@ class Factory
 
     /**
      * Intermediate staging collection (holds mixed values before resolving to Claims).
-     *
-     * @var BaseCollection<string, mixed>
      */
-    protected BaseCollection $claims;
+    protected ClaimCollection $claims;
 
-    public function __construct(/**
-     * The claim factory.
-     */
-    protected ClaimFactory $claimFactory, /**
-     * The validator.
-     */
-    protected PayloadValidator $validator)
+    public function __construct(protected ClaimFactory $claimFactory, protected PayloadValidator $validator)
     {
-        $this->claims = new BaseCollection();
+        $this->claims = new ClaimCollection();
     }
 
     /**
@@ -66,7 +57,7 @@ class Factory
      */
     public function emptyClaims(): self
     {
-        $this->claims = new BaseCollection();
+        $this->claims = new ClaimCollection();
 
         return $this;
     }

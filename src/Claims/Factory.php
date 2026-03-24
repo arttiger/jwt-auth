@@ -42,9 +42,7 @@ class Factory
     public function get(string $name, mixed $value): Claim
     {
         if ($this->has($name)) {
-            $claim = new $this->classMap[$name]($value);
-
-            return $claim->setLeeway($this->leeway);
+            return (new $this->classMap[$name]($value))->setLeeway($this->leeway);
         }
 
         return new Custom($name, $value);
@@ -68,26 +66,41 @@ class Factory
         return $this->get($name, $this->$name());
     }
 
+    /**
+     * Get the issuer claim value.
+     */
     public function iss(): string
     {
         return $this->request->url();
     }
 
+    /**
+     * Get the issued-at claim value.
+     */
     public function iat(): int
     {
         return Utils::now()->getTimestamp();
     }
 
+    /**
+     * Get the expiration claim value.
+     */
     public function exp(): int
     {
         return Utils::now()->addMinutes($this->ttl ?? 60)->getTimestamp();
     }
 
+    /**
+     * Get the not-before claim value.
+     */
     public function nbf(): int
     {
         return Utils::now()->getTimestamp();
     }
 
+    /**
+     * Get the JWT ID claim value.
+     */
     public function jti(): string
     {
         return Str::random();

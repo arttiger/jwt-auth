@@ -9,16 +9,16 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * @extends Collection<array-key, Claim|non-empty-string>
+ * @extends Collection<array-key, Claim>
  */
 class ClaimCollection extends Collection
 {
     /**
-     * @param array<array-key, Claim|non-empty-string> $items
+     * @param array<array-key, Claim> $items
      */
     public function __construct(array $items = [])
     {
-        parent::__construct($this->getArrayableItems($items));
+        parent::__construct($this->sanitizeClaims($items));
     }
 
     /**
@@ -80,30 +80,17 @@ class ClaimCollection extends Collection
      */
     public function toPlainArray(): array
     {
-        return $this->map(fn (Claim $claim): mixed => $claim->getValue())->toArray();
-    }
-
-    /**
-     * @param mixed $items
-     * @return array<string, Claim>
-     */
-    protected function getArrayableItems($items): array
-    {
-        return $this->sanitizeClaims($items);
+        return array_map(fn (Claim $claim): mixed => $claim->getValue(), $this->items);
     }
 
     /**
      * Ensure that the claims array is keyed by the claim name.
      *
-     * @param mixed $items
+     * @param array<array-key, Claim> $items
      * @return array<string, Claim>
      */
-    private function sanitizeClaims(mixed $items): array
+    private function sanitizeClaims(array $items): array
     {
-        if (! is_iterable($items)) {
-            return [];
-        }
-
         $claims = [];
 
         foreach ($items as $key => $value) {
