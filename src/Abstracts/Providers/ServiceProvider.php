@@ -94,22 +94,22 @@ abstract class ServiceProvider extends BaseServiceProvider
                 : null;
 
             if ($provider === null) {
-                throw new RuntimeException('Unable to resolve user provider for JWT guard.');
+                throw new RuntimeException(message: 'Unable to resolve user provider for JWT guard.');
             }
 
             $jwt = $app->make(JWT::class);
             if (! ($jwt instanceof JWT)) {
-                throw new RuntimeException('JWT instance not resolved.');
+                throw new RuntimeException(message: 'JWT instance not resolved.');
             }
 
             $request = $app->make(Request::class);
             if (! ($request instanceof Request)) {
-                throw new RuntimeException('Request not resolved.');
+                throw new RuntimeException(message: 'Request not resolved.');
             }
 
             $events = $app->make(Dispatcher::class);
             if (! ($events instanceof Dispatcher)) {
-                throw new RuntimeException('Event dispatcher not resolved.');
+                throw new RuntimeException(message: 'Event dispatcher not resolved.');
             }
 
             $guard = new JWTGuard($jwt, $provider, $request, $events);
@@ -199,17 +199,17 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.manager', function (Application $app): Manager {
             $provider = $app->make(JWTContract::class);
             if (! ($provider instanceof JWTContract)) {
-                throw new RuntimeException('JWT provider not resolved.');
+                throw new RuntimeException(message: 'JWT provider not resolved.');
             }
 
             $blacklist = $app->make(Blacklist::class);
             if (! ($blacklist instanceof Blacklist)) {
-                throw new RuntimeException('Blacklist not resolved.');
+                throw new RuntimeException(message: 'Blacklist not resolved.');
             }
 
             $factory = $app->make(Factory::class);
             if (! ($factory instanceof Factory)) {
-                throw new RuntimeException('Payload factory not resolved.');
+                throw new RuntimeException(message: 'Payload factory not resolved.');
             }
 
             $config = $this->resolveConfig($app);
@@ -231,7 +231,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.parser', function (Application $app): Parser {
             $request = $app->make(Request::class);
             if (! ($request instanceof Request)) {
-                throw new RuntimeException('Request not resolved.');
+                throw new RuntimeException(message: 'Request not resolved.');
             }
 
             $parser = new Parser(
@@ -256,12 +256,12 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt', function (Application $app): JWT {
             $manager = $app->make(Manager::class);
             if (! ($manager instanceof Manager)) {
-                throw new RuntimeException('Manager not resolved.');
+                throw new RuntimeException(message: 'Manager not resolved.');
             }
 
             $parser = $app->make(Parser::class);
             if (! ($parser instanceof Parser)) {
-                throw new RuntimeException('Parser not resolved.');
+                throw new RuntimeException(message: 'Parser not resolved.');
             }
 
             return (new JWT($manager, $parser))
@@ -274,17 +274,17 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.auth', function (Application $app): JWTAuth {
             $manager = $app->make(Manager::class);
             if (! ($manager instanceof Manager)) {
-                throw new RuntimeException('Manager not resolved.');
+                throw new RuntimeException(message: 'Manager not resolved.');
             }
 
             $authProvider = $app->make(Auth::class);
             if (! ($authProvider instanceof Auth)) {
-                throw new RuntimeException('Auth provider not resolved.');
+                throw new RuntimeException(message: 'Auth provider not resolved.');
             }
 
             $parser = $app->make(Parser::class);
             if (! ($parser instanceof Parser)) {
-                throw new RuntimeException('Parser not resolved.');
+                throw new RuntimeException(message: 'Parser not resolved.');
             }
 
             return (new JWTAuth($manager, $authProvider, $parser))
@@ -297,7 +297,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.blacklist', function (Application $app): Blacklist {
             $storageProvider = $app->make(Storage::class);
             if (! ($storageProvider instanceof Storage)) {
-                throw new RuntimeException('Storage provider not resolved.');
+                throw new RuntimeException(message: 'Storage provider not resolved.');
             }
 
             $config = $this->resolveConfig($app);
@@ -333,7 +333,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.claim.factory', function (Application $app): ClaimFactory {
             $request = $app->make(Request::class);
             if (! ($request instanceof Request)) {
-                throw new RuntimeException('Request not resolved.');
+                throw new RuntimeException(message: 'Request not resolved.');
             }
 
             $factory = new ClaimFactory($request);
@@ -356,12 +356,12 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.payload.factory', function (Application $app): Factory {
             $claimFactory = $app->make(ClaimFactory::class);
             if (! ($claimFactory instanceof ClaimFactory)) {
-                throw new RuntimeException('ClaimFactory not resolved.');
+                throw new RuntimeException(message: 'ClaimFactory not resolved.');
             }
 
             $validator = $app->make(PayloadValidator::class);
             if (! ($validator instanceof PayloadValidator)) {
-                throw new RuntimeException('PayloadValidator not resolved.');
+                throw new RuntimeException(message: 'PayloadValidator not resolved.');
             }
 
             return new Factory($claimFactory, $validator);
@@ -390,7 +390,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $config = $app->make(ConfigContract::class);
 
         if (! ($config instanceof ConfigContract)) {
-            throw new RuntimeException('Config repository not resolved.');
+            throw new RuntimeException(message: 'Config repository not resolved.');
         }
 
         return $config;

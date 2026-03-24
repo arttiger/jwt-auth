@@ -28,18 +28,18 @@ trait EnvHelperTrait
             );
 
             return true;
-        } else {
-            if (is_null($confirmOnExisting) || $confirmOnExisting()) {
-                $replaced = preg_replace(
-                    "/{$key}=.*/",
-                    "{$key}={$value}",
-                    $filecontents
-                );
+        }
 
-                $this->putFileContents($filepath, $replaced ?? $filecontents);
+        if (is_null($confirmOnExisting) || $confirmOnExisting()) {
+            $replaced = preg_replace(
+                "/{$key}=.*/",
+                "{$key}={$value}",
+                $filecontents
+            );
 
-                return true;
-            }
+            $this->putFileContents($filepath, $replaced ?? $filecontents);
+
+            return true;
         }
 
         return false;

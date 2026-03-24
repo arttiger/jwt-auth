@@ -90,7 +90,7 @@ class Manager
             && $this->getBlackListExceptionEnabled()
             && $this->blacklist->has($payload)
         ) {
-            throw new TokenBlacklistedException('The token has been blacklisted');
+            throw new TokenBlacklistedException(message: 'The token has been blacklisted');
         }
 
         return $payload;

@@ -35,9 +35,13 @@ class Namshi extends Provider implements JWT
             $this->jws->setPayload($payload);
             $this->jws->sign($this->getSigningKey(), $this->getPassphrase());
 
-            return (string) $this->jws->getTokenString();
+            return $this->jws->getTokenString();
         } catch (Exception $exception) {
-            throw new JWTException('Could not create token: '.$exception->getMessage(), $exception->getCode(), $exception);
+            throw new JWTException(
+                message: "Could not create token: {$exception->getMessage()}",
+                code: $exception->getCode(),
+                previous: $exception,
+            );
         }
     }
 
@@ -51,11 +55,15 @@ class Namshi extends Provider implements JWT
         try {
             $jws = $this->jws->load($token, false);
         } catch (InvalidArgumentException $invalidArgumentException) {
-            throw new TokenInvalidException('Could not decode token: '.$invalidArgumentException->getMessage(), $invalidArgumentException->getCode(), $invalidArgumentException);
+            throw new TokenInvalidException(
+                message: "Could not decode token: {$invalidArgumentException->getMessage()}",
+                code: $invalidArgumentException->getCode(),
+                previous: $invalidArgumentException,
+            );
         }
 
         if (! $jws->verify($this->getVerificationKey(), $this->getAlgo()->value)) {
-            throw new TokenInvalidException('Token Signature could not be verified.');
+            throw new TokenInvalidException(message: 'Token Signature could not be verified.');
         }
 
         $raw = $jws->getPayload();
@@ -79,13 +87,17 @@ class Namshi extends Provider implements JWT
         $className = sprintf('Namshi\\JOSE\\Signer\\OpenSSL\\%s', $this->getAlgo()->value);
 
         if (! class_exists($className)) {
-            throw new JWTException('The given algorithm could not be found');
+            throw new JWTException(message: 'The given algorithm could not be found');
         }
 
         try {
             return (new ReflectionClass($className))->isSubclassOf(PublicKey::class);
         } catch (ReflectionException $reflectionException) {
-            throw new JWTException('The given algorithm could not be found', $reflectionException->getCode(), $reflectionException);
+            throw new JWTException(
+                message: 'The given algorithm could not be found',
+                code: $reflectionException->getCode(),
+                previous: $reflectionException,
+            );
         }
     }
 }

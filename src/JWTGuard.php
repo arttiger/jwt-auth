@@ -31,6 +31,7 @@ class JWTGuard implements Guard
     use GuardHelpers {
         setUser as guardHelperSetUser;
     }
+
     use Macroable {
         __call as macroCall;
     }
@@ -68,7 +69,7 @@ class JWTGuard implements Guard
         if (
             ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
-            && $this->jwt->setRequest($this->request)->getToken()
+            && $this->jwt->setRequest($this->request)->getToken() instanceof Token
         ) {
             return $this->user = $this->provider->retrieveById($payload['sub']);
         }
@@ -87,7 +88,7 @@ class JWTGuard implements Guard
         if (
             ($payload = $this->jwt->check(true)) instanceof Payload
             && $this->validateSubject()
-            && $this->jwt->setRequest($this->request)->getToken()
+            && $this->jwt->setRequest($this->request)->getToken() instanceof Token
         ) {
             $sub = $payload->get('sub');
 
@@ -107,7 +108,7 @@ class JWTGuard implements Guard
      */
     public function userOrFail(): Authenticatable
     {
-        if ((($user = $this->user())) === null) {
+        if (!($user = $this->user()) instanceof Authenticatable) {
             throw new UserNotDefinedException();
         }
 
@@ -308,7 +309,7 @@ class JWTGuard implements Guard
      */
     protected function hasValidCredentials(?Authenticatable $user, array $credentials): bool
     {
-        $validated = null !== $user && $this->provider->validateCredentials($user, $credentials);
+        $validated = $user instanceof Authenticatable && $this->provider->validateCredentials($user, $credentials);
 
         if ($validated) {
             $this->fireValidatedEvent($user);
@@ -336,8 +337,8 @@ class JWTGuard implements Guard
      */
     protected function requireToken(): JWT
     {
-        if ($this->jwt->setRequest($this->getRequest())->getToken() === null) {
-            throw new JWTException('Token could not be parsed from the request.');
+        if (!$this->jwt->setRequest($this->getRequest())->getToken() instanceof Token) {
+            throw new JWTException(message: 'Token could not be parsed from the request.');
         }
 
         return $this->jwt;
@@ -398,7 +399,7 @@ class JWTGuard implements Guard
 
     protected function fireLogoutEvent(?Authenticatable $user): void
     {
-        if ($user === null) {
+        if (!$user instanceof Authenticatable) {
             return;
         }
 

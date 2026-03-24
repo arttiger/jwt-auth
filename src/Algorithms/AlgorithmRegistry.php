@@ -58,7 +58,7 @@ final class AlgorithmRegistry
 
         if (strtolower($value) === 'none') {
             throw new JWTException(
-                'Algorithm "none" is explicitly not supported. '
+                message: 'Algorithm "none" is explicitly not supported. '
                 .'Unsigned tokens cannot be used with this library.'
             );
         }
@@ -67,7 +67,7 @@ final class AlgorithmRegistry
 
         if (! isset($all[$value])) {
             throw new JWTException(
-                "Algorithm '{$value}' is not supported. "
+                message: "Algorithm '{$value}' is not supported. "
                 .'Supported algorithms: '.implode(', ', array_keys($all)).'.'
             );
         }

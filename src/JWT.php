@@ -118,7 +118,7 @@ class JWT
      */
     public function getToken(): ?Token
     {
-        if ($this->token === null) {
+        if (! $this->token instanceof Token) {
             try {
                 $this->parseToken();
             } catch (JWTException) {
@@ -137,7 +137,7 @@ class JWT
     public function parseToken(): static
     {
         if (! $token = $this->parser->parseToken()) {
-            throw new JWTException('The token could not be parsed from the request');
+            throw new JWTException(message: 'The token could not be parsed from the request');
         }
 
         return $this->setToken($token);
@@ -241,8 +241,8 @@ class JWT
      */
     protected function requireToken(): Token
     {
-        if ($this->token === null) {
-            throw new JWTException('A token is required');
+        if (! $this->token instanceof Token) {
+            throw new JWTException(message: 'A token is required');
         }
 
         return $this->token;
@@ -293,6 +293,6 @@ class JWT
             return $this->manager->$method(...$parameters);
         }
 
-        throw new BadMethodCallException("Method [$method] does not exist.");
+        throw new BadMethodCallException(message: "Method [$method] does not exist.");
     }
 }

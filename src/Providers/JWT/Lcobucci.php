@@ -55,7 +55,7 @@ class Lcobucci extends Provider implements JWT
     {
         $this->signer = $this->getSigner();
 
-        if ($config !== null) {
+        if ($config instanceof Configuration) {
             $this->config = $config;
         } elseif ($this->isAsymmetric()) {
             $this->config = Configuration::forAsymmetricSigner(
@@ -107,7 +107,11 @@ class Lcobucci extends Provider implements JWT
 
             return $this->builder->getToken($this->config->signer(), $this->config->signingKey())->toString();
         } catch (Exception $exception) {
-            throw new JWTException('Could not create token: '.$exception->getMessage(), $exception->getCode(), $exception);
+            throw new JWTException(
+                message: "Could not create token: {$exception->getMessage()}",
+                code: $exception->getCode(),
+                previous: $exception,
+            );
         }
     }
 
@@ -119,21 +123,25 @@ class Lcobucci extends Provider implements JWT
     public function decode(string $token): array
     {
         if ($token === '') {
-            throw new TokenInvalidException('Token cannot be empty.');
+            throw new TokenInvalidException(message: 'Token cannot be empty.');
         }
 
         try {
             $jwt = $this->config->parser()->parse($token);
         } catch (Exception $exception) {
-            throw new TokenInvalidException('Could not decode token: '.$exception->getMessage(), $exception->getCode(), $exception);
+            throw new TokenInvalidException(
+                message: "Could not decode token: {$exception->getMessage()}",
+                code: $exception->getCode(),
+                previous: $exception,
+            );
         }
 
         if (! $this->config->validator()->validate($jwt, ...$this->config->validationConstraints())) {
-            throw new TokenInvalidException('Token Signature could not be verified.');
+            throw new TokenInvalidException(message: 'Token Signature could not be verified.');
         }
 
         if (! ($jwt instanceof UnencryptedToken)) {
-            throw new TokenInvalidException('Token is not an unencrypted JWT.');
+            throw new TokenInvalidException(message: 'Token is not an unencrypted JWT.');
         }
 
         $result = [];
@@ -156,19 +164,19 @@ class Lcobucci extends Provider implements JWT
 
     protected function addClaim(string $key, mixed $value): Builder
     {
-        if ($this->builder === null) {
+        if (! $this->builder instanceof Builder) {
             $this->builder = $this->config->builder();
         }
 
         if ($key === '') {
-            throw new JWTException('Claim key cannot be empty');
+            throw new JWTException(message: 'Claim key cannot be empty');
         }
 
         switch ($key) {
             case RegisteredClaims::ID:
                 $strVal = is_string($value) ? $value : '';
                 if ($strVal === '') {
-                    throw new JWTException('JTI claim must be a non-empty string');
+                    throw new JWTException(message: 'JTI claim must be a non-empty string');
                 }
 
                 return $this->builder->identifiedBy($strVal);
@@ -197,7 +205,7 @@ class Lcobucci extends Provider implements JWT
             case RegisteredClaims::ISSUER:
                 $strVal = is_string($value) ? $value : '';
                 if ($strVal === '') {
-                    throw new JWTException('ISS claim must be a non-empty string');
+                    throw new JWTException(message: 'ISS claim must be a non-empty string');
                 }
 
                 return $this->builder->issuedBy($strVal);
@@ -207,14 +215,14 @@ class Lcobucci extends Provider implements JWT
                 foreach ((is_array($value) ? $value : [$value]) as $aud) {
                     $audStr = is_string($aud) ? $aud : '';
                     if ($audStr === '') {
-                        throw new JWTException('Each AUD value must be a non-empty string');
+                        throw new JWTException(message: 'Each AUD value must be a non-empty string');
                     }
 
                     $audiences[] = $audStr;
                 }
 
                 if (empty($audiences)) {
-                    throw new JWTException('AUD claim must have at least one audience');
+                    throw new JWTException(message: 'AUD claim must have at least one audience');
                 }
 
                 return $this->builder->permittedFor(...$audiences);
@@ -222,7 +230,7 @@ class Lcobucci extends Provider implements JWT
             case RegisteredClaims::SUBJECT:
                 $strVal = is_string($value) ? $value : '';
                 if ($strVal === '') {
-                    throw new JWTException('SUB claim must be a non-empty string');
+                    throw new JWTException(message: 'SUB claim must be a non-empty string');
                 }
 
                 return $this->builder->relatedTo($strVal);
@@ -262,7 +270,7 @@ class Lcobucci extends Provider implements JWT
     {
         $key = $this->getSigningKey();
         if ($key === '') {
-            throw new JWTException('Signing key cannot be empty');
+            throw new JWTException(message: 'Signing key cannot be empty');
         }
 
         return $this->isAsymmetric()
@@ -274,7 +282,7 @@ class Lcobucci extends Provider implements JWT
     {
         $key = $this->getVerificationKey();
         if ($key === '') {
-            throw new JWTException('Verification key cannot be empty');
+            throw new JWTException(message: 'Verification key cannot be empty');
         }
 
         return InMemory::plainText($key);

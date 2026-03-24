@@ -22,13 +22,13 @@ class TokenValidator
         $parts = explode('.', $token);
 
         if (count($parts) !== 3) {
-            throw new TokenInvalidException('Wrong number of segments');
+            throw new TokenInvalidException(message: 'Wrong number of segments');
         }
 
         $parts = array_filter(array_map(trim(...), $parts));
 
         if (count($parts) !== 3 || implode('.', $parts) !== $token) {
-            throw new TokenInvalidException('Malformed token');
+            throw new TokenInvalidException(message: 'Malformed token');
         }
 
         return $token;

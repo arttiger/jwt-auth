@@ -22,7 +22,7 @@ abstract class Middleware
     public function checkForToken(Request $request): void
     {
         if (! $this->auth->parser()->setRequest($request)->hasToken()) {
-            throw new UnauthorizedHttpException('jwt-auth', 'Token not provided');
+            throw new UnauthorizedHttpException('jwt-auth', message: 'Token not provided');
         }
     }
 
@@ -35,10 +35,15 @@ abstract class Middleware
 
         try {
             if (! $this->auth->parseToken()->authenticate()) {
-                throw new UnauthorizedHttpException('jwt-auth', 'User not found');
+                throw new UnauthorizedHttpException('jwt-auth', message: 'User not found');
             }
         } catch (JWTException $jwtException) {
-            throw new UnauthorizedHttpException('jwt-auth', $jwtException->getMessage(), $jwtException, $jwtException->getCode());
+            throw new UnauthorizedHttpException(
+                'jwt-auth',
+                message: $jwtException->getMessage(),
+                previous: $jwtException,
+                code: $jwtException->getCode(),
+            );
         }
     }
 

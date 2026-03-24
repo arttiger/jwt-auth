@@ -35,7 +35,7 @@ abstract class Provider
         $this->secret = $secret;
         $this->algo   = $algo instanceof AlgorithmId
             ? $algo
-            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException("Unsupported algorithm: '{$algo}'."));
+            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException(message: "Unsupported algorithm: '{$algo}'."));
         $this->keys   = $keys;
     }
 
@@ -43,7 +43,7 @@ abstract class Provider
     {
         $this->algo = $algo instanceof AlgorithmId
             ? $algo
-            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException("Unsupported algorithm: '{$algo}'."));
+            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException(message: "Unsupported algorithm: '{$algo}'."));
 
         return $this;
     }

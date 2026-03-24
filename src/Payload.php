@@ -168,7 +168,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
      */
     public function offsetSet(mixed $key, mixed $value): void
     {
-        throw new PayloadException('The payload is immutable');
+        throw new PayloadException(message: 'The payload is immutable');
     }
 
     /**
@@ -176,7 +176,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
      */
     public function offsetUnset(mixed $key): void
     {
-        throw new PayloadException('The payload is immutable');
+        throw new PayloadException(message: 'The payload is immutable');
     }
 
     public function count(): int
@@ -210,7 +210,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
         }
 
         throw new BadMethodCallException(
-            sprintf('The claim [%s] does not exist on the payload.', Str::after($method, 'get'))
+            message: sprintf('The claim [%s] does not exist on the payload.', Str::after($method, 'get'))
         );
     }
 }

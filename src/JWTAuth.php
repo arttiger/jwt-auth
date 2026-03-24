@@ -59,6 +59,6 @@ class JWTAuth extends JWT
             return $user;
         }
 
-        throw new JWTException('Authenticated user does not implement JWTSubject');
+        throw new JWTException(message: 'Authenticated user does not implement JWTSubject');
     }
 }

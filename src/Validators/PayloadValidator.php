@@ -78,7 +78,7 @@ class PayloadValidator extends Validator
     protected function validateStructure(Collection $claims): void
     {
         if ($this->requiredClaims && ! $claims->hasAllClaims($this->requiredClaims)) {
-            throw new TokenInvalidException('JWT payload does not contain the required claims');
+            throw new TokenInvalidException(message: 'JWT payload does not contain the required claims');
         }
     }
 
