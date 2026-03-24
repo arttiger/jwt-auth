@@ -33,7 +33,6 @@ class FactoryTest extends AbstractTestCase
     {
         $claim = $this->factory->get('iss', 'https://example.com');
         $this->factory->extend('guard', Custom::class);
-        dd($this->factory);
 
         $this->assertInstanceOf(Issuer::class, $claim);
         $this->assertSame('https://example.com', $claim->getValue());

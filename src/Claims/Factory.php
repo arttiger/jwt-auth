@@ -21,13 +21,13 @@ class Factory
      * @var array<non-empty-string, class-string<Claim>>
      */
     private array $classMap = [
-        ClaimName::Issuer->value     => Issuer::class,
-        ClaimName::Subject->value    => Subject::class,
-        ClaimName::Audience->value   => Audience::class,
+        ClaimName::Issuer->value => Issuer::class,
+        ClaimName::Subject->value => Subject::class,
+        ClaimName::Audience->value => Audience::class,
         ClaimName::Expiration->value => Expiration::class,
-        ClaimName::NotBefore->value  => NotBefore::class,
-        ClaimName::IssuedAt->value   => IssuedAt::class,
-        ClaimName::JwtId->value      => JwtId::class,
+        ClaimName::NotBefore->value => NotBefore::class,
+        ClaimName::IssuedAt->value => IssuedAt::class,
+        ClaimName::JwtId->value => JwtId::class,
     ];
 
     public function __construct(protected Request $request)

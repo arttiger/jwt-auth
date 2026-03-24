@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Abstracts\Providers;
 
-use RuntimeException;
 use ArtTiger\JWTAuth\Blacklist;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
 use ArtTiger\JWTAuth\Console\JWTGenerateCertCommand;
@@ -13,6 +12,7 @@ use ArtTiger\JWTAuth\Contracts\Providers\Auth;
 use ArtTiger\JWTAuth\Contracts\Providers\JWT as JWTContract;
 use ArtTiger\JWTAuth\Contracts\Providers\Storage;
 use ArtTiger\JWTAuth\Factory;
+use ArtTiger\JWTAuth\Guards\JWTGuard;
 use ArtTiger\JWTAuth\Http\Middleware\Authenticate;
 use ArtTiger\JWTAuth\Http\Middleware\AuthenticateAndRenew;
 use ArtTiger\JWTAuth\Http\Middleware\Check;
@@ -23,7 +23,7 @@ use ArtTiger\JWTAuth\Http\Parser\Parser;
 use ArtTiger\JWTAuth\Http\Parser\QueryString;
 use ArtTiger\JWTAuth\JWT;
 use ArtTiger\JWTAuth\JWTAuth;
-use ArtTiger\JWTAuth\JWTGuard;
+use ArtTiger\JWTAuth\JWTUserProvider;
 use ArtTiger\JWTAuth\Manager;
 use ArtTiger\JWTAuth\Providers\JWT\Lcobucci;
 use ArtTiger\JWTAuth\Providers\JWT\Namshi;
@@ -36,6 +36,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Namshi\JOSE\JWS;
+use RuntimeException;
 
 abstract class ServiceProvider extends BaseServiceProvider
 {
@@ -112,7 +113,7 @@ abstract class ServiceProvider extends BaseServiceProvider
                 throw new RuntimeException(message: 'Event dispatcher not resolved.');
             }
 
-            $guard = new JWTGuard($jwt, $provider, $request, $events);
+            $guard = new JWTGuard($jwt, new JWTUserProvider($provider), $request, $events);
 
             $ttl = Arr::has($config, 'ttl') ? Arr::get($config, 'ttl') : $configRepo->get('jwt.ttl');
 

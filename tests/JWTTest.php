@@ -55,7 +55,6 @@ class JWTTest extends AbstractTestCase
 
     public function testFromUserReturnTokenString(): void
     {
-        dd($this->jwt);
         $user = new UserStub();
         $payload = $this->makePayload();
         $factory = Mockery::mock(Factory::class);

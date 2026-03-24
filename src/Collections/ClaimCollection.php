@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * @extends Collection<array-key, Claim>
+ * @extends Collection<string, Claim>
  */
 class ClaimCollection extends Collection
 {
@@ -80,7 +80,13 @@ class ClaimCollection extends Collection
      */
     public function toPlainArray(): array
     {
-        return array_map(fn (Claim $claim): mixed => $claim->getValue(), $this->items);
+        $result = [];
+
+        foreach ($this->items as $key => $claim) {
+            $result[$key] = $claim->getValue();
+        }
+
+        return $result;
     }
 
     /**

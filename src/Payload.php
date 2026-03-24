@@ -24,7 +24,7 @@ use JsonSerializable;
  */
 class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerializable, Stringable
 {
-    private ClaimCollection $claims;
+    private readonly ClaimCollection $claims;
 
     /**
      * Build the Payload.

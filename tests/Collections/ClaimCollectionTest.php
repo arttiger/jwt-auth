@@ -81,19 +81,15 @@ class ClaimCollectionTest extends AbstractTestCase
         $this->assertFalse($collection->hasAllClaims([]));
     }
 
-    public function testToPlainArrayReturnsEmptyArrayDueToMapBug(): void
+    public function testToPlainArrayReturnsKeyedValues(): void
     {
-        // Collection::toPlainArray() calls $this->map(fn($claim) => $claim->getValue()).
-        // map() uses `new static(result)` which constructs a new Claims\Collection,
-        // whose constructor runs sanitizeClaims() and drops all non-Claim values.
-        // This is a known bug in the source: toPlainArray() always returns [].
         $collection = new ClaimCollection([
             'sub' => new Subject('user-1'),
         ]);
 
         $plain = $collection->toPlainArray();
 
-        $this->assertSame([], $plain);
+        $this->assertSame(['sub' => 'user-1'], $plain);
     }
 
     public function testClaimValuesAreAccessibleDirectlyViaGetByClaimName(): void

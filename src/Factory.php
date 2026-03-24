@@ -31,13 +31,15 @@ class Factory
     ];
 
     /**
-     * Intermediate staging collection (holds mixed values before resolving to Claims).
+     * Intermediate staging area (holds raw mixed values *and* resolved Claim objects
+     * before `resolveClaims()` converts everything to a typed ClaimCollection).
+     *
+     * @var array<string, mixed>
      */
-    protected ClaimCollection $claims;
+    protected array $claims = [];
 
     public function __construct(protected ClaimFactory $claimFactory, protected PayloadValidator $validator)
     {
-        $this->claims = new ClaimCollection();
     }
 
     /**
@@ -57,7 +59,7 @@ class Factory
      */
     public function emptyClaims(): self
     {
-        $this->claims = new ClaimCollection();
+        $this->claims = [];
 
         return $this;
     }
@@ -81,7 +83,7 @@ class Factory
      */
     protected function addClaim(string $name, mixed $value): self
     {
-        $this->claims->put($name, $value);
+        $this->claims[$name] = $value;
 
         return $this;
     }

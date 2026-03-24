@@ -82,11 +82,9 @@ class PayloadTest extends AbstractTestCase
         $this->assertFalse($this->payload->has($claim));
     }
 
-    public function testHasKeyReturnsFalseForKeyNotInToArrayOutput(): void
+    public function testHasKeyReturnsTrueForExistingClaim(): void
     {
-        // Due to the toPlainArray()/map() bug, toArray() returns empty array,
-        // so hasKey() (which uses offsetExists → Arr::has(toArray())) returns false.
-        $this->assertFalse($this->payload->hasKey('sub'));
+        $this->assertTrue($this->payload->hasKey('sub'));
     }
 
     public function testOffsetSetThrowsPayloadException(): void
@@ -206,12 +204,9 @@ class PayloadTest extends AbstractTestCase
 
     public function testInvokeCallsGetMethod(): void
     {
-        // __invoke calls get() which uses toArray(), and toPlainArray() is broken.
-        // Verify the invoke returns the same as get().
         $result = ($this->payload)('sub');
 
-        // get() returns from toArray() which is empty due to toPlainArray bug
-        $this->assertNull($result);
+        $this->assertSame('1', $result);
     }
 
     public function testGetNullReturnsToArrayResult(): void
@@ -222,13 +217,11 @@ class PayloadTest extends AbstractTestCase
         $this->assertIsArray($result);
     }
 
-    public function testGetReturnsNullForMissingClaimDueToToPlainArrayBug(): void
+    public function testGetReturnsClaimValueForExistingKey(): void
     {
-        // get('sub') calls Arr::get($this->toArray(), 'sub') — toArray() is empty
-        // so get() returns null even for existing claims.
         $result = $this->payload->get('sub');
 
-        $this->assertNull($result);
+        $this->assertSame('1', $result);
     }
 
     public function testToJsonReturnsValidJsonString(): void

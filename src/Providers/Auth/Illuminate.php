@@ -15,7 +15,7 @@ class Illuminate implements Auth
 
     public function byCredentials(array $credentials): bool
     {
-        return (bool) $this->auth->once($credentials);
+        return $this->auth->once($credentials);
     }
 
     public function byId(int|string $id): bool
