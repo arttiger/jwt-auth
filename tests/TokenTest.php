@@ -6,6 +6,9 @@ namespace ArtTiger\JWTAuth\Test;
 
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 use ArtTiger\JWTAuth\Token;
+use Illuminate\Support\Stringable;
+use ReflectionClass;
+use Stringable as StringableContract;
 
 class TokenTest extends AbstractTestCase
 {
@@ -109,5 +112,60 @@ class TokenTest extends AbstractTestCase
             'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
             $token->get()
         );
+    }
+
+    public function testConstructsFromAnotherTokenInstance(): void
+    {
+        $original = new Token(self::VALID_TOKEN);
+        $copy = new Token($original);
+
+        $this->assertSame(self::VALID_TOKEN, $copy->get());
+    }
+
+    public function testCopyConstructorProducesIndependentInstance(): void
+    {
+        $original = new Token(self::VALID_TOKEN);
+        $copy = new Token($original);
+
+        $this->assertNotSame($original, $copy);
+        $this->assertSame($original->get(), $copy->get());
+    }
+
+    public function testConstructsFromStringable(): void
+    {
+        $stringable = new Stringable(self::VALID_TOKEN);
+        $token = new Token($stringable);
+
+        $this->assertSame(self::VALID_TOKEN, $token->get());
+    }
+
+    public function testStringableIsValidatedOnConstruct(): void
+    {
+        $this->expectException(TokenInvalidException::class);
+        $this->expectExceptionMessage('Wrong number of segments');
+
+        new Token(new Stringable('not.a.valid.jwt.token.extra'));
+    }
+
+    public function testStringableWithMalformedTokenThrows(): void
+    {
+        $this->expectException(TokenInvalidException::class);
+        $this->expectExceptionMessage('Malformed token');
+
+        new Token(new Stringable(' header.payload.signature'));
+    }
+
+    public function testIsReadonlyClass(): void
+    {
+        $reflection = new ReflectionClass(Token::class);
+
+        $this->assertTrue($reflection->isReadOnly());
+    }
+
+    public function testImplementsStringableContract(): void
+    {
+        $token = new Token(self::VALID_TOKEN);
+
+        $this->assertInstanceOf(StringableContract::class, $token);
     }
 }

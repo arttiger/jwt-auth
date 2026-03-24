@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
-use Stringable;
+use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
+use Illuminate\Support\Stringable;
+use Stringable as StringableContract;
 use ArtTiger\JWTAuth\Validators\TokenValidator;
 
-class Token implements Stringable
+readonly class Token implements StringableContract
 {
-    private readonly string $value;
+    private string $value;
 
     /**
      * Create a new JSON Web Token.
      *
-     * @throws Exceptions\TokenInvalidException
+     * @throws TokenInvalidException
      */
-    public function __construct(string $value)
+    public function __construct(Stringable|self|string $value)
     {
-        $this->value = (new TokenValidator())->validate($value);
+        $this->value = match (true) {
+            $value instanceof self => $value->get(),
+            $value instanceof Stringable => (new TokenValidator())->validate($value->toString()),
+            default => (new TokenValidator())->validate($value),
+        };
     }
 
     /**
