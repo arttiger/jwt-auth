@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Algorithms;
 
 use ArtTiger\JWTAuth\Abstracts\Algorithms\RsaAlgorithm;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use Lcobucci\JWT\Signer\Rsa\Sha384;
 
 /**
@@ -13,9 +14,9 @@ use Lcobucci\JWT\Signer\Rsa\Sha384;
  */
 final class Rs384 extends RsaAlgorithm
 {
-    public function id(): string
+    public function id(): AlgorithmId
     {
-        return 'RS384';
+        return AlgorithmId::RS384;
     }
 
     /** @return class-string<Sha384> */

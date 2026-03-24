@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Claims;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
@@ -16,7 +17,7 @@ class IssuedAt extends Claim
         validateCreate as commonValidateCreate;
     }
 
-    protected string $name = 'iat';
+    protected string $name = ClaimName::IssuedAt->value;
 
     public function getValue(): int
     {

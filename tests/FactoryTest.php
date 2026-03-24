@@ -16,11 +16,12 @@ use ArtTiger\JWTAuth\Factory;
 use ArtTiger\JWTAuth\Payload;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
 use Mockery;
+use Mockery\MockInterface;
 
 class FactoryTest extends AbstractTestCase
 {
-    private ClaimFactory $claimFactory;
-    private PayloadValidator $validator;
+    private MockInterface&ClaimFactory $claimFactory;
+    private MockInterface&PayloadValidator $validator;
     private Factory $factory;
 
     protected function setUp(): void
@@ -43,9 +44,13 @@ class FactoryTest extends AbstractTestCase
         $this->claimFactory->shouldReceive('make')->with('nbf')->andReturn(new NotBefore($now));
         $this->claimFactory->shouldReceive('make')->with('jti')->andReturn(new JwtId('test-jti'));
         $this->claimFactory->shouldReceive('get')->andReturnUsing(
-            fn (string $name, mixed $value) => match ($name) {
-                'sub' => new Subject((string) $value),
-                default => new \ArtTiger\JWTAuth\Claims\Custom($name, $value),
+            function (string $name, mixed $value): \ArtTiger\JWTAuth\Abstracts\Claim {
+                $strVal = is_scalar($value) ? (string) $value : '';
+
+                return match ($name) {
+                    'sub' => new Subject($strVal),
+                    default => new \ArtTiger\JWTAuth\Claims\Custom($name, $value),
+                };
             }
         );
 
@@ -144,7 +149,7 @@ class FactoryTest extends AbstractTestCase
     {
         // Magic __call adds to the internal staging collection, not to customClaims.
         // Verify that it returns $this for fluent chaining.
-        $result = $this->factory->role('admin');
+        $result = $this->factory->__call('role', ['admin']);
 
         $this->assertSame($this->factory, $result);
     }
@@ -163,7 +168,7 @@ class FactoryTest extends AbstractTestCase
             ->with('role', 'admin')
             ->andReturn(new \ArtTiger\JWTAuth\Claims\Custom('role', 'admin'));
 
-        $this->factory->role('admin');
+        $this->factory->__call('role', ['admin']);
         $collection = $this->factory->buildClaimsCollection();
 
         $this->assertNotNull($collection->getByClaimName('role'));

@@ -40,7 +40,7 @@ abstract class HmacAlgorithm implements Algorithm
     ): void {
         if ($secret === null || $secret === '') {
             throw new JWTException(
-                message: "Algorithm {$this->id()} requires a non-empty shared secret. "
+                message: "Algorithm {$this->id()->value} requires a non-empty shared secret. "
                 .'Run `php artisan jwt:secret` to generate one.'
             );
         }
@@ -50,7 +50,7 @@ abstract class HmacAlgorithm implements Algorithm
 
         if ($actual < $required) {
             throw new JWTException(
-                message: "Algorithm {$this->id()} requires a secret of at least {$required} bytes "
+                message: "Algorithm {$this->id()->value} requires a secret of at least {$required} bytes "
                 ."({$actual} given). "
                 .'Run `php artisan jwt:secret` to generate a secure key.'
             );

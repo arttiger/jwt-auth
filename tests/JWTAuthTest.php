@@ -16,12 +16,13 @@ use ArtTiger\JWTAuth\Test\Stubs\UserStub;
 use ArtTiger\JWTAuth\Token;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
 use Mockery;
+use Mockery\MockInterface;
 
 class JWTAuthTest extends AbstractTestCase
 {
-    private Manager $manager;
-    private Auth $auth;
-    private Parser $parser;
+    private MockInterface&Manager $manager;
+    private MockInterface&Auth $auth;
+    private MockInterface&Parser $parser;
     private JWTAuth $jwtAuth;
 
     private const VALID_TOKEN = 'header.payload.signature';
@@ -37,6 +38,9 @@ class JWTAuthTest extends AbstractTestCase
         $this->jwtAuth = new JWTAuth($this->manager, $this->auth, $this->parser);
     }
 
+    /**
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     */
     private function makePayload(?array $overrides = []): Payload
     {
         $validator = Mockery::mock(PayloadValidator::class);

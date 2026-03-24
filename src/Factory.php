@@ -7,6 +7,7 @@ namespace ArtTiger\JWTAuth;
 use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Claims\Collection;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Support\CustomClaims;
 use ArtTiger\JWTAuth\Support\RefreshFlow;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
@@ -33,11 +34,11 @@ class Factory
      * @var string[]
      */
     protected array $defaultClaims = [
-        'iss',
-        'iat',
-        'exp',
-        'nbf',
-        'jti',
+        ClaimName::Issuer->value,
+        ClaimName::IssuedAt->value,
+        ClaimName::Expiration->value,
+        ClaimName::NotBefore->value,
+        ClaimName::JwtId->value,
     ];
 
     /**
@@ -107,7 +108,7 @@ class Factory
     {
         // Remove exp claim when TTL is null (non-expiring tokens)
         if ($this->claimFactory->getTTL() === null) {
-            $expKey = array_search('exp', $this->defaultClaims, true);
+            $expKey = array_search(ClaimName::Expiration->value, $this->defaultClaims, true);
 
             if ($expKey !== false) {
                 unset($this->defaultClaims[$expKey]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Algorithms;
 
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use Lcobucci\JWT\Signer;
 use SensitiveParameter;
@@ -20,9 +21,9 @@ use SensitiveParameter;
 interface Algorithm
 {
     /**
-     * RFC 7518 algorithm identifier, e.g. 'HS256', 'RS384', 'ES512'.
+     * RFC 7518 algorithm identifier.
      */
-    public function id(): string;
+    public function id(): AlgorithmId;
 
     /**
      * Returns true for RSA / ECDSA algorithms that require a public/private key pair.

@@ -123,6 +123,6 @@ class ExpirationTest extends AbstractTestCase
         // public contract instead: getValue() always returns an int.
         $claim = new Expiration($this->testNowTimestamp + 3600);
 
-        $this->assertIsInt($claim->getValue());
+        $this->assertSame($this->testNowTimestamp + 3600, $claim->getValue());
     }
 }

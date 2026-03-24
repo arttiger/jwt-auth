@@ -47,7 +47,7 @@ abstract class EcdsaAlgorithm implements Algorithm
 
         if ($publicKey === null && $privateKey === null) {
             throw new JWTException(
-                message: "Algorithm {$this->id()} requires a public/private key pair. "
+                message: "Algorithm {$this->id()->value} requires a public/private key pair. "
                 ."Set 'jwt.keys.public' and 'jwt.keys.private' in your configuration."
             );
         }
@@ -79,7 +79,7 @@ abstract class EcdsaAlgorithm implements Algorithm
 
         if ($details['bits'] < $required) {
             throw new JWTException(
-                message: "EC key for {$this->id()} must be at least {$required} bits "
+                message: "EC key for {$this->id()->value} must be at least {$required} bits "
                 ."({$details['bits']} bits given). "
                 .'Regenerate the key with the correct NIST curve.'
             );

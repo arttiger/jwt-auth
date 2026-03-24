@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Algorithms;
 
 use ArtTiger\JWTAuth\Abstracts\Algorithms\RsaAlgorithm;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 
 /**
@@ -13,9 +14,9 @@ use Lcobucci\JWT\Signer\Rsa\Sha256;
  */
 final class Rs256 extends RsaAlgorithm
 {
-    public function id(): string
+    public function id(): AlgorithmId
     {
-        return 'RS256';
+        return AlgorithmId::RS256;
     }
 
     /** @return class-string<Sha256> */

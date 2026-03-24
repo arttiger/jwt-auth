@@ -10,6 +10,7 @@ use ArtTiger\JWTAuth\Algorithms\Es512;
 use ArtTiger\JWTAuth\Algorithms\Rs256;
 use ArtTiger\JWTAuth\Algorithms\Rs384;
 use ArtTiger\JWTAuth\Algorithms\Rs512;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256 as EcdsaSha256;
@@ -33,7 +34,7 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
 
     public function testRs256IdReturnsCorrectString(): void
     {
-        $this->assertSame('RS256', (new Rs256())->id());
+        $this->assertSame(AlgorithmId::RS256, (new Rs256())->id());
     }
 
     public function testRs256IsAsymmetric(): void
@@ -62,7 +63,7 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testRs256PassesWithOnlyPublicKey(): void
@@ -71,7 +72,7 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'public' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testRs256ThrowsWhenBothKeysAreNull(): void
@@ -85,7 +86,7 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
 
     public function testRs384IdReturnsCorrectString(): void
     {
-        $this->assertSame('RS384', (new Rs384())->id());
+        $this->assertSame(AlgorithmId::RS384, (new Rs384())->id());
     }
 
     public function testRs384IsAsymmetric(): void
@@ -112,14 +113,14 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     // --- RS512 ---
 
     public function testRs512IdReturnsCorrectString(): void
     {
-        $this->assertSame('RS512', (new Rs512())->id());
+        $this->assertSame(AlgorithmId::RS512, (new Rs512())->id());
     }
 
     public function testRs512IsAsymmetric(): void
@@ -146,14 +147,14 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     // --- ES256 ---
 
     public function testEs256IdReturnsCorrectString(): void
     {
-        $this->assertSame('ES256', (new Es256())->id());
+        $this->assertSame(AlgorithmId::ES256, (new Es256())->id());
     }
 
     public function testEs256IsAsymmetric(): void
@@ -181,7 +182,7 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testEs256PassesWithOnlyPublicKey(): void
@@ -190,14 +191,14 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'public' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     // --- ES384 ---
 
     public function testEs384IdReturnsCorrectString(): void
     {
-        $this->assertSame('ES384', (new Es384())->id());
+        $this->assertSame(AlgorithmId::ES384, (new Es384())->id());
     }
 
     public function testEs384IsAsymmetric(): void
@@ -224,14 +225,14 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     // --- ES512 ---
 
     public function testEs512IdReturnsCorrectString(): void
     {
-        $this->assertSame('ES512', (new Es512())->id());
+        $this->assertSame(AlgorithmId::ES512, (new Es512())->id());
     }
 
     public function testEs512IsAsymmetric(): void
@@ -258,6 +259,6 @@ class AsymmetricAlgorithmTest extends AbstractTestCase
             'private' => self::UNPARSEABLE_KEY,
         ]);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 }

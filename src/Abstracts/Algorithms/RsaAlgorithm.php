@@ -43,7 +43,7 @@ abstract class RsaAlgorithm implements Algorithm
 
         if ($publicKey === null && $privateKey === null) {
             throw new JWTException(
-                "Algorithm {$this->id()} requires a public/private key pair. "
+                "Algorithm {$this->id()->value} requires a public/private key pair. "
                 ."Set 'jwt.keys.public' and 'jwt.keys.private' in your configuration."
             );
         }
@@ -75,7 +75,7 @@ abstract class RsaAlgorithm implements Algorithm
 
         if ($details['bits'] < self::MINIMUM_BITS) {
             throw new JWTException(
-                "RSA key for {$this->id()} must be at least ".self::MINIMUM_BITS." bits; "
+                "RSA key for {$this->id()->value} must be at least ".self::MINIMUM_BITS." bits; "
                 ."{$details['bits']} bits given. Regenerate the key with a stronger size."
             );
         }

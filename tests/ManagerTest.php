@@ -14,12 +14,13 @@ use ArtTiger\JWTAuth\Payload;
 use ArtTiger\JWTAuth\Token;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
 use Mockery;
+use Mockery\MockInterface;
 
 class ManagerTest extends AbstractTestCase
 {
-    private JWTContract $jwtProvider;
-    private Blacklist $blacklist;
-    private Factory $payloadFactory;
+    private MockInterface&JWTContract $jwtProvider;
+    private MockInterface&Blacklist $blacklist;
+    private MockInterface&Factory $payloadFactory;
     private Manager $manager;
 
     private const VALID_TOKEN_STRING = 'header.payload.signature';

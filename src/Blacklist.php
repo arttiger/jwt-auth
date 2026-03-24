@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth;
 
 use ArtTiger\JWTAuth\Contracts\Providers\Storage;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Support\Utils;
 
 class Blacklist
@@ -19,7 +20,7 @@ class Blacklist
     protected int $refreshTTL = 20160;
 
     /** The unique key held within the blacklist (defaults to jti claim). */
-    protected string $key = 'jti';
+    protected string $key = ClaimName::JwtId->value;
 
     public function __construct(Storage $storage)
     {
@@ -32,7 +33,7 @@ class Blacklist
     public function add(Payload $payload): bool
     {
         // No exp claim → add indefinitely
-        if (! $payload->hasKey('exp')) {
+        if (! $payload->hasKey(ClaimName::Expiration->value)) {
             return $this->addForever($payload);
         }
 
@@ -56,8 +57,8 @@ class Blacklist
      */
     protected function getMinutesUntilExpired(Payload $payload): int
     {
-        $expValue = $payload->get('exp');
-        $iatValue = $payload->get('iat');
+        $expValue = $payload->get(ClaimName::Expiration->value);
+        $iatValue = $payload->get(ClaimName::IssuedAt->value);
 
         if (! is_int($expValue) || ! is_int($iatValue)) {
             return $this->refreshTTL + 1;

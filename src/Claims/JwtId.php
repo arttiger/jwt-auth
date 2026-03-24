@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Claims;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 
 class JwtId extends Claim
 {
-    protected string $name = 'jti';
+    protected string $name = ClaimName::JwtId->value;
 
     /**
      * @throws InvalidClaimException

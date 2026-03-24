@@ -104,7 +104,7 @@ class NotBeforeTest extends AbstractTestCase
     {
         $claim = new NotBefore($this->testNowTimestamp);
 
-        $this->assertIsInt($claim->getValue());
+        $this->assertSame($this->testNowTimestamp, $claim->getValue());
     }
 
     public function testToArrayUsesNbfKey(): void

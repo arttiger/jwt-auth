@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Claims;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 use ArtTiger\JWTAuth\Traits\DatetimeTrait;
 
@@ -12,7 +13,7 @@ class NotBefore extends Claim
 {
     use DatetimeTrait;
 
-    protected string $name = 'nbf';
+    protected string $name = ClaimName::NotBefore->value;
 
     public function getValue(): int
     {

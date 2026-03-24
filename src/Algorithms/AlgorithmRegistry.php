@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Algorithms;
 
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 
 /**
@@ -20,7 +21,7 @@ final class AlgorithmRegistry
     private static ?array $algorithms = null;
 
     /**
-     * Returns all registered algorithms keyed by their RFC 7518 identifier.
+     * Returns all registered algorithms keyed by their RFC 7518 identifier string.
      *
      * @return array<string, Algorithm>
      */
@@ -28,15 +29,15 @@ final class AlgorithmRegistry
     {
         if (self::$algorithms === null) {
             self::$algorithms = [
-                'HS256' => new Hs256(),
-                'HS384' => new Hs384(),
-                'HS512' => new Hs512(),
-                'RS256' => new Rs256(),
-                'RS384' => new Rs384(),
-                'RS512' => new Rs512(),
-                'ES256' => new Es256(),
-                'ES384' => new Es384(),
-                'ES512' => new Es512(),
+                AlgorithmId::HS256->value => new Hs256(),
+                AlgorithmId::HS384->value => new Hs384(),
+                AlgorithmId::HS512->value => new Hs512(),
+                AlgorithmId::RS256->value => new Rs256(),
+                AlgorithmId::RS384->value => new Rs384(),
+                AlgorithmId::RS512->value => new Rs512(),
+                AlgorithmId::ES256->value => new Es256(),
+                AlgorithmId::ES384->value => new Es384(),
+                AlgorithmId::ES512->value => new Es512(),
             ];
         }
 
@@ -46,11 +47,16 @@ final class AlgorithmRegistry
     /**
      * Looks up a typed Algorithm by its RFC 7518 identifier.
      *
-     * @throws JWTException when the identifier is not recognised or is 'none'.
+     * Accepts either an {@see AlgorithmId} enum case or a plain string for
+     * backward compatibility with config values.
+     *
+     * @throws JWTException when the identifier is 'none' or not recognised.
      */
-    public static function find(string $id): Algorithm
+    public static function find(AlgorithmId|string $id): Algorithm
     {
-        if (strtolower($id) === 'none') {
+        $value = $id instanceof AlgorithmId ? $id->value : $id;
+
+        if (strtolower($value) === 'none') {
             throw new JWTException(
                 'Algorithm "none" is explicitly not supported. '
                 .'Unsigned tokens cannot be used with this library.'
@@ -59,21 +65,23 @@ final class AlgorithmRegistry
 
         $all = self::all();
 
-        if (! isset($all[$id])) {
+        if (! isset($all[$value])) {
             throw new JWTException(
-                "Algorithm '{$id}' is not supported. "
+                "Algorithm '{$value}' is not supported. "
                 .'Supported algorithms: '.implode(', ', array_keys($all)).'.'
             );
         }
 
-        return $all[$id];
+        return $all[$value];
     }
 
     /**
      * Returns true when the given identifier maps to a registered algorithm.
      */
-    public static function supports(string $id): bool
+    public static function supports(AlgorithmId|string $id): bool
     {
-        return isset(self::all()[$id]);
+        $value = $id instanceof AlgorithmId ? $id->value : $id;
+
+        return isset(self::all()[$value]);
     }
 }

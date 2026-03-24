@@ -26,6 +26,9 @@ class PayloadValidatorTest extends AbstractTestCase
         $this->validator = new PayloadValidator();
     }
 
+    /**
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     */
     private function makeFullCollection(?array $overrides = []): Collection
     {
         return $this->makeValidCollection($overrides ?? []);
@@ -38,7 +41,7 @@ class PayloadValidatorTest extends AbstractTestCase
         // Should not throw
         $this->validator->validateCollection($collection);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testThrowsWhenRequiredClaimIsMissing(): void
@@ -101,7 +104,7 @@ class PayloadValidatorTest extends AbstractTestCase
         // Should not throw — no required claims to check
         $this->validator->validateCollection($collection);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testSetRequiredClaimsLimitsWhichClaimsAreRequired(): void
@@ -113,7 +116,7 @@ class PayloadValidatorTest extends AbstractTestCase
         // Should not throw
         $this->validator->validateCollection($collection);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testSetRefreshTtlIsStoredAndUsed(): void
@@ -134,7 +137,7 @@ class PayloadValidatorTest extends AbstractTestCase
         // Should not throw
         $this->validator->validateCollection($collection);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testRefreshFlowWithExpiredIatThrowsTokenExpiredException(): void
@@ -162,7 +165,7 @@ class PayloadValidatorTest extends AbstractTestCase
         // Should not throw
         $this->validator->validateCollection($collection);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testSetRequiredClaimsReturnsSelf(): void

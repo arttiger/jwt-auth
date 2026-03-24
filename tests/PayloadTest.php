@@ -27,6 +27,8 @@ class PayloadTest extends AbstractTestCase
 
     /**
      * Use a mocked validator to bypass validation in unit tests.
+     *
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
      */
     private function makePayload(?array $overrides = []): Payload
     {
@@ -168,21 +170,21 @@ class PayloadTest extends AbstractTestCase
     public function testMagicCallGetSubjectReturnsSubValue(): void
     {
         // __call matches 'getSubject' → looks for ArtTiger\JWTAuth\Claims\Subject
-        $result = $this->payload->getSubject();
+        $result = $this->payload->__call('getSubject', []);
 
         $this->assertSame('1', $result);
     }
 
     public function testMagicCallGetExpirationReturnsTimestamp(): void
     {
-        $result = $this->payload->getExpiration();
+        $result = $this->payload->__call('getExpiration', []);
 
         $this->assertSame($this->testNowTimestamp + 3600, $result);
     }
 
     public function testMagicCallGetIssuedAtReturnsTimestamp(): void
     {
-        $result = $this->payload->getIssuedAt();
+        $result = $this->payload->__call('getIssuedAt', []);
 
         $this->assertSame($this->testNowTimestamp, $result);
     }
@@ -191,14 +193,14 @@ class PayloadTest extends AbstractTestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        $this->payload->getNonExistentClaim();
+        $this->payload->__call('getNonExistentClaim', []);
     }
 
     public function testMagicCallThrowsBadMethodCallExceptionForMethodNotMatchingPattern(): void
     {
         $this->expectException(BadMethodCallException::class);
 
-        $this->payload->unknownMethod();
+        $this->payload->__call('unknownMethod', []);
     }
 
     public function testInvokeCallsGetMethod(): void
@@ -244,7 +246,8 @@ class PayloadTest extends AbstractTestCase
     {
         $result = $this->payload->jsonSerialize();
 
-        $this->assertIsArray($result);
+        // jsonSerialize() delegates to toPlainArray() which currently returns []
+        $this->assertSame($this->payload->toArray(), $result);
     }
 
     public function testPayloadWithCustomClaimCanBeRetrievedViaGetInternal(): void

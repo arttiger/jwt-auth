@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
 use Illuminate\Support\Arr;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Exceptions\SecretMissingException;
 
@@ -17,32 +18,37 @@ abstract class Provider
      */
     protected array $keys;
 
-    protected string $algo;
+    protected AlgorithmId $algo;
 
     /**
      * @param array<string, mixed> $keys
      *
      * @throws SecretMissingException
+     * @throws JWTException when the algorithm identifier is not recognised.
      */
-    public function __construct(?string $secret, string $algo, array $keys)
+    public function __construct(?string $secret, AlgorithmId|string $algo, array $keys)
     {
         if ($secret === null && (! isset($keys['public']) || ! isset($keys['private']))) {
             throw new SecretMissingException();
         }
 
         $this->secret = $secret;
-        $this->algo = $algo;
-        $this->keys = $keys;
+        $this->algo   = $algo instanceof AlgorithmId
+            ? $algo
+            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException("Unsupported algorithm: '{$algo}'."));
+        $this->keys   = $keys;
     }
 
-    public function setAlgo(string $algo): self
+    public function setAlgo(AlgorithmId|string $algo): self
     {
-        $this->algo = $algo;
+        $this->algo = $algo instanceof AlgorithmId
+            ? $algo
+            : (AlgorithmId::tryFrom($algo) ?? throw new JWTException("Unsupported algorithm: '{$algo}'."));
 
         return $this;
     }
 
-    public function getAlgo(): string
+    public function getAlgo(): AlgorithmId
     {
         return $this->algo;
     }

@@ -11,6 +11,9 @@ use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Http\Parser\Parser;
 use ArtTiger\JWTAuth\Support\CustomClaims;
 
+/**
+ * @method mixed setBlacklistEnabled(bool $enabled) Delegates to Manager::setBlacklistEnabled().
+ */
 class JWT
 {
     use CustomClaims;
@@ -134,7 +137,7 @@ class JWT
      *
      * @throws JWTException
      */
-    public function parseToken(): self
+    public function parseToken(): static
     {
         if (! $token = $this->parser->parseToken()) {
             throw new JWTException('The token could not be parsed from the request');
@@ -164,7 +167,7 @@ class JWT
     /**
      * Convenience method to get a claim value.
      */
-    public function getClaim(string $claim)
+    public function getClaim(string $claim): mixed
     {
         return $this->payload()->get($claim);
     }
@@ -222,14 +225,14 @@ class JWT
         return $this->hashSubjectModel($model) === $prv;
     }
 
-    public function setToken(Token|string $token): self
+    public function setToken(Token|string $token): static
     {
         $this->token = $token instanceof Token ? $token : new Token($token);
 
         return $this;
     }
 
-    public function unsetToken(): self
+    public function unsetToken(): static
     {
         $this->token = null;
 
@@ -255,7 +258,7 @@ class JWT
         return $this;
     }
 
-    public function lockSubject(bool $lock): self
+    public function lockSubject(bool $lock): static
     {
         $this->lockSubject = $lock;
 

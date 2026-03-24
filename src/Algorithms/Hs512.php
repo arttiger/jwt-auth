@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Algorithms;
 
 use ArtTiger\JWTAuth\Abstracts\Algorithms\HmacAlgorithm;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use Lcobucci\JWT\Signer\Hmac\Sha512;
 
 /**
@@ -13,9 +14,9 @@ use Lcobucci\JWT\Signer\Hmac\Sha512;
  */
 final class Hs512 extends HmacAlgorithm
 {
-    public function id(): string
+    public function id(): AlgorithmId
     {
-        return 'HS512';
+        return AlgorithmId::HS512;
     }
 
     /** @return class-string<Sha512> */

@@ -8,10 +8,11 @@ use ArtTiger\JWTAuth\Blacklist;
 use ArtTiger\JWTAuth\Contracts\Providers\Storage;
 use ArtTiger\JWTAuth\Payload;
 use Mockery;
+use Mockery\MockInterface;
 
 class BlacklistTest extends AbstractTestCase
 {
-    private Storage $storage;
+    private MockInterface&Storage $storage;
     private Blacklist $blacklist;
 
     protected function setUp(): void

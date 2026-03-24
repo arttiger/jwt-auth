@@ -39,8 +39,7 @@ abstract class AbstractTestCase extends TestCase
      * Build a string-keyed array of Claim instances suitable for
      * passing directly to `new Collection([...])`.
      *
-     * @param array<string, mixed> $overrides  Key/value pairs to override defaults.
-     *                                         Pass a Claim instance to replace the whole claim.
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim> $overrides  Claim instances to replace defaults.
      * @return array<string, \ArtTiger\JWTAuth\Abstracts\Claim>
      */
     protected function makeValidClaims(array $overrides = []): array
@@ -66,7 +65,7 @@ abstract class AbstractTestCase extends TestCase
     /**
      * Build a Collection from the valid claim set, with optional overrides.
      *
-     * @param array<string, mixed> $overrides
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim> $overrides
      */
     protected function makeValidCollection(array $overrides = []): Collection
     {

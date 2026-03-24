@@ -108,9 +108,16 @@ class CollectionTest extends AbstractTestCase
             'iat' => new IssuedAt($now),
         ]);
 
-        $this->assertSame('user-1', $collection->getByClaimName('sub')->getValue());
-        $this->assertSame('https://example.com', $collection->getByClaimName('iss')->getValue());
-        $this->assertSame($now, $collection->getByClaimName('iat')->getValue());
+        $sub = $collection->getByClaimName('sub');
+        $iss = $collection->getByClaimName('iss');
+        $iat = $collection->getByClaimName('iat');
+
+        $this->assertNotNull($sub);
+        $this->assertNotNull($iss);
+        $this->assertNotNull($iat);
+        $this->assertSame('user-1', $sub->getValue());
+        $this->assertSame('https://example.com', $iss->getValue());
+        $this->assertSame($now, $iat->getValue());
     }
 
     public function testValidateCallsValidatePayloadOnEachClaim(): void

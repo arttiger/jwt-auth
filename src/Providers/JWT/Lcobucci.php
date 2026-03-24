@@ -14,6 +14,7 @@ use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use ArtTiger\JWTAuth\Algorithms\Algorithm;
 use ArtTiger\JWTAuth\Algorithms\AlgorithmRegistry;
 use ArtTiger\JWTAuth\Contracts\Providers\JWT;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
@@ -34,7 +35,7 @@ class Lcobucci extends Provider implements JWT
      */
     public function __construct(
         #[\SensitiveParameter] ?string $secret,
-        string $algo,
+        AlgorithmId|string $algo,
         #[\SensitiveParameter] array $keys,
         ?Configuration $config = null,
     ) {

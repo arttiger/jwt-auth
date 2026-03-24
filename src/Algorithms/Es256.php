@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Algorithms;
 
 use ArtTiger\JWTAuth\Abstracts\Algorithms\EcdsaAlgorithm;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 
 /**
@@ -13,9 +14,9 @@ use Lcobucci\JWT\Signer\Ecdsa\Sha256;
  */
 final class Es256 extends EcdsaAlgorithm
 {
-    public function id(): string
+    public function id(): AlgorithmId
     {
-        return 'ES256';
+        return AlgorithmId::ES256;
     }
 
     /** @return class-string<Sha256> */

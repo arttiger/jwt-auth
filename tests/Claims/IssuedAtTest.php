@@ -111,6 +111,6 @@ class IssuedAtTest extends AbstractTestCase
     {
         $claim = new IssuedAt($this->testNowTimestamp);
 
-        $this->assertIsInt($claim->getValue());
+        $this->assertSame($this->testNowTimestamp, $claim->getValue());
     }
 }

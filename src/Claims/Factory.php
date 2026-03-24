@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Claims;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use ArtTiger\JWTAuth\Support\Utils;
 use Illuminate\Http\Request;
@@ -22,13 +23,13 @@ class Factory
      * @var array<non-empty-string, class-string<Claim>>
      */
     private array $classMap = [
-        'iss' => Issuer::class,
-        'sub' => Subject::class,
-        'aud' => Audience::class,
-        'exp' => Expiration::class,
-        'nbf' => NotBefore::class,
-        'iat' => IssuedAt::class,
-        'jti' => JwtId::class,
+        ClaimName::Issuer->value     => Issuer::class,
+        ClaimName::Subject->value    => Subject::class,
+        ClaimName::Audience->value   => Audience::class,
+        ClaimName::Expiration->value => Expiration::class,
+        ClaimName::NotBefore->value  => NotBefore::class,
+        ClaimName::IssuedAt->value   => IssuedAt::class,
+        ClaimName::JwtId->value      => JwtId::class,
     ];
 
     public function __construct(Request $request)

@@ -54,7 +54,7 @@ class Namshi extends Provider implements JWT
             throw new TokenInvalidException('Could not decode token: '.$e->getMessage(), $e->getCode(), $e);
         }
 
-        if (! $jws->verify($this->getVerificationKey(), $this->getAlgo())) {
+        if (! $jws->verify($this->getVerificationKey(), $this->getAlgo()->value)) {
             throw new TokenInvalidException('Token Signature could not be verified.');
         }
 
@@ -76,7 +76,7 @@ class Namshi extends Provider implements JWT
 
     protected function isAsymmetric(): bool
     {
-        $className = sprintf('Namshi\\JOSE\\Signer\\OpenSSL\\%s', $this->getAlgo());
+        $className = sprintf('Namshi\\JOSE\\Signer\\OpenSSL\\%s', $this->getAlgo()->value);
 
         if (! class_exists($className)) {
             throw new JWTException('The given algorithm could not be found');

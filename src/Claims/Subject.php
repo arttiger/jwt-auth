@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace ArtTiger\JWTAuth\Claims;
 
 use ArtTiger\JWTAuth\Abstracts\Claim;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 
 class Subject extends Claim
 {
-    protected string $name = 'sub';
+    protected string $name = ClaimName::Subject->value;
 
     /**
      * RFC 7519 §4.1.2: value MUST be a StringOrURI — a case-sensitive string

@@ -6,6 +6,7 @@ namespace ArtTiger\JWTAuth\Validators;
 
 use ArtTiger\JWTAuth\Abstracts\Validator;
 use ArtTiger\JWTAuth\Claims\Collection;
+use ArtTiger\JWTAuth\Enums\ClaimName;
 use ArtTiger\JWTAuth\Exceptions\TokenExpiredException;
 use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
@@ -17,12 +18,12 @@ class PayloadValidator extends Validator
      * @var string[]
      */
     protected array $requiredClaims = [
-        'iss',
-        'iat',
-        'exp',
-        'nbf',
-        'sub',
-        'jti',
+        ClaimName::Issuer->value,
+        ClaimName::IssuedAt->value,
+        ClaimName::Expiration->value,
+        ClaimName::NotBefore->value,
+        ClaimName::Subject->value,
+        ClaimName::JwtId->value,
     ];
 
     /**

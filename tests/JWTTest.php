@@ -15,14 +15,15 @@ use ArtTiger\JWTAuth\Token;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
 use BadMethodCallException;
 use Mockery;
+use Mockery\MockInterface;
 
 class JWTTest extends AbstractTestCase
 {
-    private Manager $manager;
-    private Parser $parser;
+    private MockInterface&Manager $manager;
+    private MockInterface&Parser $parser;
     private JWT $jwt;
 
-    private const VALID_TOKEN = 'header.payload.signature';
+    private const string VALID_TOKEN = 'header.payload.signature';
 
     protected function setUp(): void
     {
@@ -34,6 +35,9 @@ class JWTTest extends AbstractTestCase
         $this->jwt = new JWT($this->manager, $this->parser);
     }
 
+    /**
+     * @param array<string, \ArtTiger\JWTAuth\Abstracts\Claim>|null $overrides
+     */
     private function makePayload(?array $overrides = []): Payload
     {
         $validator = Mockery::mock(PayloadValidator::class);
@@ -363,6 +367,6 @@ class JWTTest extends AbstractTestCase
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('nonExistentMethod');
 
-        $this->jwt->nonExistentMethod();
+        $this->jwt->__call('nonExistentMethod', []);
     }
 }

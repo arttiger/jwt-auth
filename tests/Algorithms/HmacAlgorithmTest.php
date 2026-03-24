@@ -7,6 +7,7 @@ namespace ArtTiger\JWTAuth\Test\Algorithms;
 use ArtTiger\JWTAuth\Algorithms\Hs256;
 use ArtTiger\JWTAuth\Algorithms\Hs384;
 use ArtTiger\JWTAuth\Algorithms\Hs512;
+use ArtTiger\JWTAuth\Enums\AlgorithmId;
 use ArtTiger\JWTAuth\Exceptions\JWTException;
 use ArtTiger\JWTAuth\Test\AbstractTestCase;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
@@ -19,7 +20,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
     public function testHs256IdReturnsCorrectString(): void
     {
-        $this->assertSame('HS256', (new Hs256())->id());
+        $this->assertSame(AlgorithmId::HS256, (new Hs256())->id());
     }
 
     public function testHs256IsNotAsymmetric(): void
@@ -38,7 +39,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
         (new Hs256())->validateKeyMaterial($secret, []);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testHs256AcceptsSecretLongerThanMinimum(): void
@@ -47,7 +48,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
         (new Hs256())->validateKeyMaterial($secret, []);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testHs256ThrowsForNullSecret(): void
@@ -88,7 +89,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
     public function testHs384IdReturnsCorrectString(): void
     {
-        $this->assertSame('HS384', (new Hs384())->id());
+        $this->assertSame(AlgorithmId::HS384, (new Hs384())->id());
     }
 
     public function testHs384IsNotAsymmetric(): void
@@ -107,7 +108,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
         (new Hs384())->validateKeyMaterial($secret, []);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testHs384ThrowsForNullSecret(): void
@@ -136,7 +137,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
     public function testHs512IdReturnsCorrectString(): void
     {
-        $this->assertSame('HS512', (new Hs512())->id());
+        $this->assertSame(AlgorithmId::HS512, (new Hs512())->id());
     }
 
     public function testHs512IsNotAsymmetric(): void
@@ -155,7 +156,7 @@ class HmacAlgorithmTest extends AbstractTestCase
 
         (new Hs512())->validateKeyMaterial($secret, []);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     public function testHs512ThrowsForNullSecret(): void
@@ -186,6 +187,6 @@ class HmacAlgorithmTest extends AbstractTestCase
 
         (new Hs512())->validateKeyMaterial($secret, []);
 
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 }

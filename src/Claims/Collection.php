@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 class Collection extends IlluminateCollection
 {
     /**
-     * @param iterable<mixed>|Claim[] $items
+     * @param iterable<mixed>|array<mixed> $items
      */
     public function __construct(mixed $items = [])
     {

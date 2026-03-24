@@ -87,6 +87,7 @@ class ClaimTest extends AbstractTestCase
 
         $this->assertJson($json);
         $decoded = json_decode($json, true);
+        $this->assertIsArray($decoded);
         $this->assertSame($this->futureTimestamp, $decoded['exp']);
     }
 
