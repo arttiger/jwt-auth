@@ -24,12 +24,12 @@ class RefreshToken extends Middleware
 
         try {
             $token = $this->auth->parseToken()->refresh();
-        } catch (JWTException $exception) {
+        } catch (JWTException $jwtException) {
             throw new UnauthorizedHttpException(
                 'jwt-auth',
-                message: $exception->getMessage(),
-                previous: $exception,
-                code: $exception->getCode(),
+                message: $jwtException->getMessage(),
+                previous: $jwtException,
+                code: $jwtException->getCode(),
             );
         }
 

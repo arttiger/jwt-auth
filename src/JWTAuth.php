@@ -11,12 +11,9 @@ use ArtTiger\JWTAuth\Http\Parser\Parser;
 
 class JWTAuth extends JWT
 {
-    protected Auth $auth;
-
-    public function __construct(Manager $manager, Auth $auth, Parser $parser)
+    public function __construct(Manager $manager, protected Auth $auth, Parser $parser)
     {
         parent::__construct($manager, $parser);
-        $this->auth = $auth;
     }
 
     /**

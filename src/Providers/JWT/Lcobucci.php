@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
+use SensitiveParameter;
+use Exception;
+use Carbon\CarbonImmutable;
+use DateTimeImmutable;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\UnencryptedToken;
 use Lcobucci\JWT\Configuration;
@@ -34,9 +38,9 @@ class Lcobucci extends Provider implements JWT
      * @throws JWTException when the algorithm is unsupported or the key material is invalid.
      */
     public function __construct(
-        #[\SensitiveParameter] ?string $secret,
+        #[SensitiveParameter] ?string $secret,
         AlgorithmId|string $algo,
-        #[\SensitiveParameter] array $keys,
+        #[SensitiveParameter] array $keys,
         ?Configuration $config = null,
     ) {
         parent::__construct($secret, $algo, $keys);
@@ -73,7 +77,7 @@ class Lcobucci extends Provider implements JWT
         }
     }
 
-    public function setSecret(#[\SensitiveParameter] ?string $secret): static
+    public function setSecret(#[SensitiveParameter] ?string $secret): static
     {
         $this->secret = $secret;
         $this->algorithm->validateKeyMaterial($secret, $this->keys);
@@ -102,8 +106,8 @@ class Lcobucci extends Provider implements JWT
             }
 
             return $this->builder->getToken($this->config->signer(), $this->config->signingKey())->toString();
-        } catch (\Exception $e) {
-            throw new JWTException('Could not create token: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $exception) {
+            throw new JWTException('Could not create token: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 
@@ -120,8 +124,8 @@ class Lcobucci extends Provider implements JWT
 
         try {
             $jwt = $this->config->parser()->parse($token);
-        } catch (\Exception $e) {
-            throw new TokenInvalidException('Could not decode token: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $exception) {
+            throw new TokenInvalidException('Could not decode token: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
 
         if (! $this->config->validator()->validate($jwt, ...$this->config->validationConstraints())) {
@@ -137,7 +141,8 @@ class Lcobucci extends Provider implements JWT
             if (! is_string($claimKey)) {
                 continue;
             }
-            if ($claim instanceof \DateTimeImmutable) {
+
+            if ($claim instanceof DateTimeImmutable) {
                 $result[$claimKey] = $claim->getTimestamp();
             } elseif (is_object($claim) && method_exists($claim, 'getValue')) {
                 $result[$claimKey] = $claim->getValue();
@@ -172,21 +177,21 @@ class Lcobucci extends Provider implements JWT
                 $ts = is_numeric($value) ? (int) $value : 0;
 
                 return $this->builder->expiresAt(
-                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                    DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new CarbonImmutable()
                 );
 
             case RegisteredClaims::NOT_BEFORE:
                 $ts = is_numeric($value) ? (int) $value : 0;
 
                 return $this->builder->canOnlyBeUsedAfter(
-                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                    DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new CarbonImmutable()
                 );
 
             case RegisteredClaims::ISSUED_AT:
                 $ts = is_numeric($value) ? (int) $value : 0;
 
                 return $this->builder->issuedAt(
-                    \DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new \DateTimeImmutable()
+                    DateTimeImmutable::createFromFormat('U', (string) $ts) ?: new CarbonImmutable()
                 );
 
             case RegisteredClaims::ISSUER:
@@ -204,8 +209,10 @@ class Lcobucci extends Provider implements JWT
                     if ($audStr === '') {
                         throw new JWTException('Each AUD value must be a non-empty string');
                     }
+
                     $audiences[] = $audStr;
                 }
+
                 if (empty($audiences)) {
                     throw new JWTException('AUD claim must have at least one audience');
                 }

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
+use Stringable;
 use ArtTiger\JWTAuth\Validators\TokenValidator;
 
-class Token
+class Token implements Stringable
 {
-    private string $value;
+    private readonly string $value;
 
     /**
      * Create a new JSON Web Token.

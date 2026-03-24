@@ -17,21 +17,6 @@ class Manager
     use RefreshFlow;
 
     /**
-     * The provider.
-     */
-    protected JWTContract $provider;
-
-    /**
-     * The blacklist.
-     */
-    protected Blacklist $blacklist;
-
-    /**
-     * the payload factory.
-     */
-    protected Factory $payloadFactory;
-
-    /**
      * The blacklist flag.
      */
     protected bool $blacklistEnabled = true;
@@ -58,11 +43,21 @@ class Manager
      *
      * @return void
      */
-    public function __construct(JWTContract $provider, Blacklist $blacklist, Factory $payloadFactory)
+    public function __construct(
+        /**
+         * The provider.
+         */
+        protected JWTContract $provider,
+        /**
+         * The blacklist.
+         */
+        protected Blacklist $blacklist,
+        /**
+         * the payload factory.
+         */
+        protected Factory $payloadFactory
+    )
     {
-        $this->provider = $provider;
-        $this->blacklist = $blacklist;
-        $this->payloadFactory = $payloadFactory;
     }
 
     /**

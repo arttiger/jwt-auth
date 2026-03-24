@@ -33,6 +33,7 @@ class Audience extends Claim
             if (! is_string($item)) {
                 throw new InvalidClaimException($this);
             }
+
             $strings[] = $item;
         }
 

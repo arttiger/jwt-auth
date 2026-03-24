@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\JWT;
 
+use Exception;
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionException;
 use Namshi\JOSE\JWS;
 use Namshi\JOSE\Signer\OpenSSL\PublicKey;
 use ArtTiger\JWTAuth\Contracts\Providers\JWT;
@@ -12,16 +16,12 @@ use ArtTiger\JWTAuth\Exceptions\TokenInvalidException;
 
 class Namshi extends Provider implements JWT
 {
-    protected JWS $jws;
-
     /**
      * @param array<string, mixed> $keys
      */
-    public function __construct(JWS $jws, ?string $secret, string $algo, array $keys)
+    public function __construct(protected JWS $jws, ?string $secret, string $algo, array $keys)
     {
         parent::__construct($secret, $algo, $keys);
-
-        $this->jws = $jws;
     }
 
     /**
@@ -36,8 +36,8 @@ class Namshi extends Provider implements JWT
             $this->jws->sign($this->getSigningKey(), $this->getPassphrase());
 
             return (string) $this->jws->getTokenString();
-        } catch (\Exception $e) {
-            throw new JWTException('Could not create token: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $exception) {
+            throw new JWTException('Could not create token: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 
@@ -50,8 +50,8 @@ class Namshi extends Provider implements JWT
     {
         try {
             $jws = $this->jws->load($token, false);
-        } catch (\InvalidArgumentException $e) {
-            throw new TokenInvalidException('Could not decode token: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new TokenInvalidException('Could not decode token: '.$invalidArgumentException->getMessage(), $invalidArgumentException->getCode(), $invalidArgumentException);
         }
 
         if (! $jws->verify($this->getVerificationKey(), $this->getAlgo()->value)) {
@@ -83,9 +83,9 @@ class Namshi extends Provider implements JWT
         }
 
         try {
-            return (new \ReflectionClass($className))->isSubclassOf(PublicKey::class);
-        } catch (\ReflectionException $e) {
-            throw new JWTException('The given algorithm could not be found', $e->getCode(), $e);
+            return (new ReflectionClass($className))->isSubclassOf(PublicKey::class);
+        } catch (ReflectionException $reflectionException) {
+            throw new JWTException('The given algorithm could not be found', $reflectionException->getCode(), $reflectionException);
         }
     }
 }

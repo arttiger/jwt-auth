@@ -13,8 +13,6 @@ use Illuminate\Support\Str;
 
 class Factory
 {
-    protected Request $request;
-
     protected ?int $ttl = 60;
 
     protected int $leeway = 0;
@@ -32,9 +30,8 @@ class Factory
         ClaimName::JwtId->value      => JwtId::class,
     ];
 
-    public function __construct(Request $request)
+    public function __construct(protected Request $request)
     {
-        $this->request = $request;
     }
 
     /**

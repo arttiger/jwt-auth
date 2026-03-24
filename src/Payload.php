@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
+use Stringable;
+use BadMethodCallException;
 use ArrayAccess;
 use ArtTiger\JWTAuth\Abstracts\Claim;
 use ArtTiger\JWTAuth\Claims\Collection;
@@ -20,9 +22,9 @@ use JsonSerializable;
  * @implements ArrayAccess<string, mixed>
  * @implements Arrayable<string, mixed>
  */
-class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerializable
+class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerializable, Stringable
 {
-    private Collection $claims;
+    private readonly Collection $claims;
 
     /**
      * Build the Payload.
@@ -83,7 +85,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
 
         if ($claim !== null) {
             if (is_array($claim)) {
-                return array_map([$this, 'get'], $claim);
+                return array_map($this->get(...), $claim);
             }
 
             if (is_string($claim) || is_int($claim)) {
@@ -143,7 +145,7 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
      */
     public function toJson(mixed $options = JSON_UNESCAPED_SLASHES): string
     {
-        return (string) json_encode($this->toArray(), (int) $options | JSON_THROW_ON_ERROR);
+        return json_encode($this->toArray(), (int) $options | JSON_THROW_ON_ERROR);
     }
 
     public function __toString(): string
@@ -195,19 +197,19 @@ class Payload implements ArrayAccess, Arrayable, Countable, Jsonable, JsonSerial
      *
      * @param array<mixed> $parameters
      *
-     * @throws \BadMethodCallException
+     * @throws BadMethodCallException
      */
     public function __call(string $method, array $parameters): mixed
     {
         if (preg_match('/get(.+)\b/i', $method, $matches)) {
             foreach ($this->claims as $claim) {
-                if (get_class($claim) === 'ArtTiger\\JWTAuth\\Claims\\'.$matches[1]) {
+                if ($claim::class === 'ArtTiger\\JWTAuth\\Claims\\'.$matches[1]) {
                     return $claim->getValue();
                 }
             }
         }
 
-        throw new \BadMethodCallException(
+        throw new BadMethodCallException(
             sprintf('The claim [%s] does not exist on the payload.', Str::after($method, 'get'))
         );
     }

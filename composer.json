@@ -56,7 +56,8 @@
         "orchestra/testbench": "^10|^11",
         "phpstan/phpstan": "^2",
         "phpstan/phpstan-mockery": "^2.0",
-        "phpunit/phpunit": "^10.5|^11|^12|^13"
+        "phpunit/phpunit": "^10.5|^11|^12|^13",
+        "rector/rector": "^2.3"
     },
     "autoload": {
         "psr-4": {

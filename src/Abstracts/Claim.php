@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Abstracts;
 
+use Stringable;
 use ArtTiger\JWTAuth\Contracts\Claim as ClaimContract;
 use ArtTiger\JWTAuth\Exceptions\InvalidClaimException;
 use Illuminate\Contracts\Support\Arrayable;
@@ -13,7 +14,7 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, mixed>
  */
-abstract class Claim implements Arrayable, ClaimContract, Jsonable, JsonSerializable
+abstract class Claim implements Arrayable, ClaimContract, Jsonable, JsonSerializable, Stringable
 {
     protected string $name;
 
@@ -97,7 +98,7 @@ abstract class Claim implements Arrayable, ClaimContract, Jsonable, JsonSerializ
 
     public function toJson(mixed $options = JSON_UNESCAPED_SLASHES): string
     {
-        return (string) json_encode($this->toArray(), (int) $options | JSON_THROW_ON_ERROR);
+        return json_encode($this->toArray(), (int) $options | JSON_THROW_ON_ERROR);
     }
 
     public function __toString(): string

@@ -9,11 +9,8 @@ use ArtTiger\JWTAuth\Contracts\Providers\Auth;
 
 class Illuminate implements Auth
 {
-    protected GuardContract $auth;
-
-    public function __construct(GuardContract $auth)
+    public function __construct(protected GuardContract $auth)
     {
-        $this->auth = $auth;
     }
 
     public function byCredentials(array $credentials): bool

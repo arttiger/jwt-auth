@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Abstracts\Providers;
 
+use RuntimeException;
 use ArtTiger\JWTAuth\Blacklist;
 use ArtTiger\JWTAuth\Claims\Factory as ClaimFactory;
 use ArtTiger\JWTAuth\Console\JWTGenerateCertCommand;
@@ -27,8 +28,11 @@ use ArtTiger\JWTAuth\Manager;
 use ArtTiger\JWTAuth\Providers\JWT\Lcobucci;
 use ArtTiger\JWTAuth\Providers\JWT\Namshi;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Config\Repository as ConfigContract;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Namshi\JOSE\JWS;
@@ -74,38 +78,38 @@ abstract class ServiceProvider extends BaseServiceProvider
 
     protected function extendAuthGuard(): void
     {
-        $authManager = $this->app->make(\Illuminate\Auth\AuthManager::class);
+        $authManager = $this->app->make(AuthManager::class);
 
-        if (! ($authManager instanceof \Illuminate\Auth\AuthManager)) {
+        if (! ($authManager instanceof AuthManager)) {
             return;
         }
 
         $configRepo = $this->resolveConfig($this->app);
 
         $authManager->extend('jwt', function (Application $app, string $name, array $config) use ($configRepo): JWTGuard {
-            $auth = $app->make(\Illuminate\Auth\AuthManager::class);
+            $auth = $app->make(AuthManager::class);
             $providerName = $config['provider'] ?? 'users';
-            $provider = ($auth instanceof \Illuminate\Auth\AuthManager)
+            $provider = ($auth instanceof AuthManager)
                 ? $auth->createUserProvider(is_string($providerName) ? $providerName : 'users')
                 : null;
 
             if ($provider === null) {
-                throw new \RuntimeException('Unable to resolve user provider for JWT guard.');
+                throw new RuntimeException('Unable to resolve user provider for JWT guard.');
             }
 
             $jwt = $app->make(JWT::class);
             if (! ($jwt instanceof JWT)) {
-                throw new \RuntimeException('JWT instance not resolved.');
+                throw new RuntimeException('JWT instance not resolved.');
             }
 
-            $request = $app->make(\Illuminate\Http\Request::class);
-            if (! ($request instanceof \Illuminate\Http\Request)) {
-                throw new \RuntimeException('Request not resolved.');
+            $request = $app->make(Request::class);
+            if (! ($request instanceof Request)) {
+                throw new RuntimeException('Request not resolved.');
             }
 
-            $events = $app->make(\Illuminate\Contracts\Events\Dispatcher::class);
-            if (! ($events instanceof \Illuminate\Contracts\Events\Dispatcher)) {
-                throw new \RuntimeException('Event dispatcher not resolved.');
+            $events = $app->make(Dispatcher::class);
+            if (! ($events instanceof Dispatcher)) {
+                throw new RuntimeException('Event dispatcher not resolved.');
             }
 
             $guard = new JWTGuard($jwt, $provider, $request, $events);
@@ -142,7 +146,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->registerNamshiProvider();
         $this->registerLcobucciProvider();
 
-        $this->app->singleton('arttiger.jwt.provider.jwt', fn (Application $app) => $this->getConfigInstance($app, 'providers.jwt'));
+        $this->app->singleton('arttiger.jwt.provider.jwt', fn (Application $app): mixed => $this->getConfigInstance($app, 'providers.jwt'));
     }
 
     protected function registerNamshiProvider(): void
@@ -182,12 +186,12 @@ abstract class ServiceProvider extends BaseServiceProvider
 
     protected function registerAuthProvider(): void
     {
-        $this->app->singleton('arttiger.jwt.provider.auth', fn (Application $app) => $this->getConfigInstance($app, 'providers.auth'));
+        $this->app->singleton('arttiger.jwt.provider.auth', fn (Application $app): mixed => $this->getConfigInstance($app, 'providers.auth'));
     }
 
     protected function registerStorageProvider(): void
     {
-        $this->app->singleton('arttiger.jwt.provider.storage', fn (Application $app) => $this->getConfigInstance($app, 'providers.storage'));
+        $this->app->singleton('arttiger.jwt.provider.storage', fn (Application $app): mixed => $this->getConfigInstance($app, 'providers.storage'));
     }
 
     protected function registerManager(): void
@@ -195,23 +199,23 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.manager', function (Application $app): Manager {
             $provider = $app->make(JWTContract::class);
             if (! ($provider instanceof JWTContract)) {
-                throw new \RuntimeException('JWT provider not resolved.');
+                throw new RuntimeException('JWT provider not resolved.');
             }
 
             $blacklist = $app->make(Blacklist::class);
             if (! ($blacklist instanceof Blacklist)) {
-                throw new \RuntimeException('Blacklist not resolved.');
+                throw new RuntimeException('Blacklist not resolved.');
             }
 
             $factory = $app->make(Factory::class);
             if (! ($factory instanceof Factory)) {
-                throw new \RuntimeException('Payload factory not resolved.');
+                throw new RuntimeException('Payload factory not resolved.');
             }
 
             $config = $this->resolveConfig($app);
             $rawClaims = $config->get('jwt.persistent_claims', []);
             $persistentClaims = is_array($rawClaims)
-                ? array_values(array_filter($rawClaims, 'is_string'))
+                ? array_values(array_filter($rawClaims, is_string(...)))
                 : [];
 
             return (new Manager($provider, $blacklist, $factory))
@@ -225,9 +229,9 @@ abstract class ServiceProvider extends BaseServiceProvider
     protected function registerTokenParser(): void
     {
         $this->app->singleton('arttiger.jwt.parser', function (Application $app): Parser {
-            $request = $app->make(\Illuminate\Http\Request::class);
-            if (! ($request instanceof \Illuminate\Http\Request)) {
-                throw new \RuntimeException('Request not resolved.');
+            $request = $app->make(Request::class);
+            if (! ($request instanceof Request)) {
+                throw new RuntimeException('Request not resolved.');
             }
 
             $parser = new Parser(
@@ -252,12 +256,12 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt', function (Application $app): JWT {
             $manager = $app->make(Manager::class);
             if (! ($manager instanceof Manager)) {
-                throw new \RuntimeException('Manager not resolved.');
+                throw new RuntimeException('Manager not resolved.');
             }
 
             $parser = $app->make(Parser::class);
             if (! ($parser instanceof Parser)) {
-                throw new \RuntimeException('Parser not resolved.');
+                throw new RuntimeException('Parser not resolved.');
             }
 
             return (new JWT($manager, $parser))
@@ -270,17 +274,17 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.auth', function (Application $app): JWTAuth {
             $manager = $app->make(Manager::class);
             if (! ($manager instanceof Manager)) {
-                throw new \RuntimeException('Manager not resolved.');
+                throw new RuntimeException('Manager not resolved.');
             }
 
             $authProvider = $app->make(Auth::class);
             if (! ($authProvider instanceof Auth)) {
-                throw new \RuntimeException('Auth provider not resolved.');
+                throw new RuntimeException('Auth provider not resolved.');
             }
 
             $parser = $app->make(Parser::class);
             if (! ($parser instanceof Parser)) {
-                throw new \RuntimeException('Parser not resolved.');
+                throw new RuntimeException('Parser not resolved.');
             }
 
             return (new JWTAuth($manager, $authProvider, $parser))
@@ -293,7 +297,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.blacklist', function (Application $app): Blacklist {
             $storageProvider = $app->make(Storage::class);
             if (! ($storageProvider instanceof Storage)) {
-                throw new \RuntimeException('Storage provider not resolved.');
+                throw new RuntimeException('Storage provider not resolved.');
             }
 
             $config = $this->resolveConfig($app);
@@ -315,7 +319,7 @@ abstract class ServiceProvider extends BaseServiceProvider
             $refreshTTL = $config->get('jwt.refresh_ttl', 20160);
             $rawRequired = $config->get('jwt.required_claims', []);
             $requiredClaims = is_array($rawRequired)
-                ? array_values(array_filter($rawRequired, 'is_string'))
+                ? array_values(array_filter($rawRequired, is_string(...)))
                 : [];
 
             return (new PayloadValidator())
@@ -327,9 +331,9 @@ abstract class ServiceProvider extends BaseServiceProvider
     protected function registerClaimFactory(): void
     {
         $this->app->singleton('arttiger.jwt.claim.factory', function (Application $app): ClaimFactory {
-            $request = $app->make(\Illuminate\Http\Request::class);
-            if (! ($request instanceof \Illuminate\Http\Request)) {
-                throw new \RuntimeException('Request not resolved.');
+            $request = $app->make(Request::class);
+            if (! ($request instanceof Request)) {
+                throw new RuntimeException('Request not resolved.');
             }
 
             $factory = new ClaimFactory($request);
@@ -352,12 +356,12 @@ abstract class ServiceProvider extends BaseServiceProvider
         $this->app->singleton('arttiger.jwt.payload.factory', function (Application $app): Factory {
             $claimFactory = $app->make(ClaimFactory::class);
             if (! ($claimFactory instanceof ClaimFactory)) {
-                throw new \RuntimeException('ClaimFactory not resolved.');
+                throw new RuntimeException('ClaimFactory not resolved.');
             }
 
             $validator = $app->make(PayloadValidator::class);
             if (! ($validator instanceof PayloadValidator)) {
-                throw new \RuntimeException('PayloadValidator not resolved.');
+                throw new RuntimeException('PayloadValidator not resolved.');
             }
 
             return new Factory($claimFactory, $validator);
@@ -366,8 +370,8 @@ abstract class ServiceProvider extends BaseServiceProvider
 
     protected function registerJWTCommands(): void
     {
-        $this->app->singleton('arttiger.jwt.secret', fn () => new JWTGenerateSecretCommand());
-        $this->app->singleton('arttiger.jwt.cert', fn () => new JWTGenerateCertCommand());
+        $this->app->singleton('arttiger.jwt.secret', fn (): JWTGenerateSecretCommand => new JWTGenerateSecretCommand());
+        $this->app->singleton('arttiger.jwt.cert', fn (): JWTGenerateCertCommand => new JWTGenerateCertCommand());
     }
 
     protected function getConfigInstance(Application $app, string $key): mixed
@@ -386,7 +390,7 @@ abstract class ServiceProvider extends BaseServiceProvider
         $config = $app->make(ConfigContract::class);
 
         if (! ($config instanceof ConfigContract)) {
-            throw new \RuntimeException('Config repository not resolved.');
+            throw new RuntimeException('Config repository not resolved.');
         }
 
         return $config;

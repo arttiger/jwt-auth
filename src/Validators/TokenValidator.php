@@ -25,7 +25,7 @@ class TokenValidator
             throw new TokenInvalidException('Wrong number of segments');
         }
 
-        $parts = array_filter(array_map('trim', $parts));
+        $parts = array_filter(array_map(trim(...), $parts));
 
         if (count($parts) !== 3 || implode('.', $parts) !== $token) {
             throw new TokenInvalidException('Malformed token');

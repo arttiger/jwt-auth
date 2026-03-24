@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth;
 
+use Illuminate\Auth\Events\Validated;
 use BadMethodCallException;
 use Illuminate\Auth\Events\Attempting;
 use Illuminate\Auth\Events\Authenticated;
@@ -40,31 +41,22 @@ class JWTGuard implements Guard
     protected ?Authenticatable $lastAttempted = null;
 
     /**
-     * The JWT instance.
-     */
-    protected JWT $jwt;
-
-    /**
-     * The request instance.
-     */
-    protected Request $request;
-
-    /**
-     * The event dispatcher instance.
-     */
-    protected Dispatcher $events;
-
-    /**
      * The name of the Guard.
      */
     protected string $name = 'arttiger.jwt';
 
-    public function __construct(JWT $jwt, UserProvider $provider, Request $request, Dispatcher $eventDispatcher)
+    public function __construct(/**
+     * The JWT instance.
+     */
+    protected JWT $jwt, UserProvider $provider, /**
+     * The request instance.
+     */
+    protected Request $request, /**
+     * The event dispatcher instance.
+     */
+    protected Dispatcher $events)
     {
-        $this->jwt = $jwt;
         $this->provider = $provider;
-        $this->request = $request;
-        $this->events = $eventDispatcher;
     }
 
     public function user(): ?Authenticatable
@@ -115,7 +107,7 @@ class JWTGuard implements Guard
      */
     public function userOrFail(): Authenticatable
     {
-        if (! $user = $this->user()) {
+        if ((($user = $this->user())) === null) {
             throw new UserNotDefinedException();
         }
 
@@ -135,8 +127,8 @@ class JWTGuard implements Guard
      */
     public function attempt(array $credentials = [], bool $login = true): bool|string
     {
-        $this->lastAttempted = $user = $this->provider->retrieveByCredentials($credentials);
-
+        $this->lastAttempted = $this->provider->retrieveByCredentials($credentials);
+        $user = $this->lastAttempted;
         $this->fireAttemptEvent($credentials);
 
         if ($this->hasValidCredentials($user, $credentials)) {
@@ -344,7 +336,7 @@ class JWTGuard implements Guard
      */
     protected function requireToken(): JWT
     {
-        if (! $this->jwt->setRequest($this->getRequest())->getToken()) {
+        if ($this->jwt->setRequest($this->getRequest())->getToken() === null) {
             throw new JWTException('Token could not be parsed from the request.');
         }
 
@@ -365,9 +357,9 @@ class JWTGuard implements Guard
 
     protected function fireValidatedEvent(Authenticatable $user): void
     {
-        if (class_exists(\Illuminate\Auth\Events\Validated::class)) {
+        if (class_exists(Validated::class)) {
             $this->events->dispatch(
-                new \Illuminate\Auth\Events\Validated(
+                new Validated(
                     $this->name,
                     $user
                 )

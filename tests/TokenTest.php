@@ -9,7 +9,7 @@ use ArtTiger\JWTAuth\Token;
 
 class TokenTest extends AbstractTestCase
 {
-    private const VALID_TOKEN = 'header.payload.signature';
+    private const string VALID_TOKEN = 'header.payload.signature';
 
     public function testConstructsWithValidThreeSegmentToken(): void
     {

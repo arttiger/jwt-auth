@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Console;
 
+use Illuminate\Contracts\Config\Repository;
 use ArtTiger\JWTAuth\Traits\EnvHelperTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -67,7 +68,7 @@ class JWTGenerateSecretCommand extends Command
 
     protected function displayKey(string $key): void
     {
-        $config = $this->laravel->make(\Illuminate\Contracts\Config\Repository::class);
+        $config = $this->laravel->make(Repository::class);
         $config->set('jwt.secret', $key);
 
         $this->info("jwt-auth secret [$key] set successfully.");

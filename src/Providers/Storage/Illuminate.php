@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers\Storage;
 
+use BadMethodCallException;
 use Illuminate\Contracts\Cache\Repository as CacheContract;
 use ArtTiger\JWTAuth\Contracts\Providers\Storage;
 
 class Illuminate implements Storage
 {
-    protected CacheContract $cache;
-
     protected string $tag = 'arttiger.jwt';
 
     protected ?bool $supportsTags = null;
 
-    public function __construct(CacheContract $cache)
+    public function __construct(protected CacheContract $cache)
     {
-        $this->cache = $cache;
     }
 
     public function add(string $key, mixed $value, int $minutes): void
@@ -73,7 +71,7 @@ class Illuminate implements Storage
         try {
             $this->cache->tags($this->tag);
             $this->supportsTags = true;
-        } catch (\BadMethodCallException) {
+        } catch (BadMethodCallException) {
             $this->supportsTags = false;
         }
     }

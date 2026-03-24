@@ -19,19 +19,9 @@ class JWT
     use CustomClaims;
 
     /**
-     * The authentication manager.
-     */
-    protected Manager $manager;
-
-    /**
-     * The HTTP parser.
-     */
-    protected Parser $parser;
-
-    /**
      * The token.
      */
-    protected ?Token $token;
+    protected ?Token $token = null;
 
     /**
      * Lock the subject.
@@ -43,10 +33,17 @@ class JWT
      *
      * @return void
      */
-    public function __construct(Manager $manager, Parser $parser)
+    public function __construct(
+        /**
+         * The authentication manager.
+         */
+        protected Manager $manager,
+        /**
+         * The HTTP parser.
+         */
+        protected Parser $parser
+    )
     {
-        $this->manager = $manager;
-        $this->parser = $parser;
     }
 
     /**
@@ -213,7 +210,7 @@ class JWT
      */
     protected function hashSubjectModel(string|object $model): string
     {
-        return sha1(is_object($model) ? get_class($model) : $model);
+        return sha1(is_object($model) ? $model::class : $model);
     }
 
     public function checkSubjectModel(string|object $model): bool
@@ -244,7 +241,7 @@ class JWT
      */
     protected function requireToken(): Token
     {
-        if (! $this->token) {
+        if ($this->token === null) {
             throw new JWTException('A token is required');
         }
 

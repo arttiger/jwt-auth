@@ -10,26 +10,21 @@ use ArtTiger\JWTAuth\Contracts\Http\Parser as ParserContract;
 class Parser
 {
     /**
-     * The chain of parsers.
-     *
-     * @var ParserContract[]
-     */
-    private array $chain;
-
-    /**
-     * The request.
-     */
-    protected Request $request;
-
-    /**
      * Constructor.
      *
      * @param ParserContract[] $chain
      */
-    public function __construct(Request $request, array $chain = [])
+    public function __construct(
+        /**
+         * The request.
+         */
+        protected Request $request,
+        /**
+         * The chain of parsers.
+         */
+        private array $chain = []
+    )
     {
-        $this->request = $request;
-        $this->chain = $chain;
     }
 
     /**

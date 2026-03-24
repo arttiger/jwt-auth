@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Providers;
 
+use Illuminate\Routing\Router;
 use ArtTiger\JWTAuth\Abstracts\Providers\ServiceProvider;
 use ArtTiger\JWTAuth\Facades\JWTAuth;
 use ArtTiger\JWTAuth\Facades\JWTFactory;
@@ -69,16 +70,14 @@ class LaravelServiceProvider extends ServiceProvider
 
     protected function registerStorageProvider(): void
     {
-        $this->app->singleton('arttiger.jwt.provider.storage', function (Application $app): mixed {
-            return $this->getConfigInstance($app, 'providers.storage');
-        });
+        $this->app->singleton('arttiger.jwt.provider.storage', fn(Application $app): mixed => $this->getConfigInstance($app, 'providers.storage'));
     }
 
     protected function aliasMiddleware(): void
     {
         $router = $this->app->make('router');
 
-        if (! ($router instanceof \Illuminate\Routing\Router)) {
+        if (! ($router instanceof Router)) {
             return;
         }
 

@@ -15,14 +15,13 @@ class Cookies implements ParserContract
 {
     use KeyTrait;
 
-    /**
-     * Decrypt or not the cookie while parsing.
-     */
-    private bool $decrypt;
-
-    public function __construct(bool $decrypt = true)
+    public function __construct(
+        /**
+         * Decrypt or not the cookie while parsing.
+         */
+        private bool $decrypt = true
+    )
     {
-        $this->decrypt = $decrypt;
     }
 
     /**
@@ -38,10 +37,11 @@ class Cookies implements ParserContract
                 if (! is_string($raw)) {
                     return null;
                 }
+
                 $decrypted = Crypt::decrypt($raw);
 
                 return is_string($decrypted) ? $decrypted : null;
-            } catch (DecryptException $ex) {
+            } catch (DecryptException) {
                 throw new TokenInvalidException(message: 'Token has not decrypted successfully.');
             }
         }

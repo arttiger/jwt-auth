@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ArtTiger\JWTAuth\Traits;
 
+use Closure;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Str;
 
 trait EnvHelperTrait
@@ -13,7 +15,7 @@ trait EnvHelperTrait
         return file_exists($this->envPath());
     }
 
-    public function updateEnvEntry(string $key, string $value, ?\Closure $confirmOnExisting = null): bool
+    public function updateEnvEntry(string $key, string $value, ?Closure $confirmOnExisting = null): bool
     {
         $filepath = $this->envPath();
 
@@ -57,7 +59,7 @@ trait EnvHelperTrait
 
     protected function envPath(): string
     {
-        if ($this->laravel instanceof \Illuminate\Foundation\Application) {
+        if ($this->laravel instanceof Application) {
             return $this->laravel->environmentFilePath();
         }
 

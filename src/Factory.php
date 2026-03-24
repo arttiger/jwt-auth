@@ -19,16 +19,6 @@ class Factory
     use RefreshFlow;
 
     /**
-     * The claim factory.
-     */
-    protected ClaimFactory $claimFactory;
-
-    /**
-     * The validator.
-     */
-    protected PayloadValidator $validator;
-
-    /**
      * The default claims.
      *
      * @var string[]
@@ -48,10 +38,14 @@ class Factory
      */
     protected BaseCollection $claims;
 
-    public function __construct(ClaimFactory $claimFactory, PayloadValidator $validator)
+    public function __construct(/**
+     * The claim factory.
+     */
+    protected ClaimFactory $claimFactory, /**
+     * The validator.
+     */
+    protected PayloadValidator $validator)
     {
-        $this->claimFactory = $claimFactory;
-        $this->validator = $validator;
         $this->claims = new BaseCollection();
     }
 
