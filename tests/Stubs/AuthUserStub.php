@@ -46,13 +46,13 @@ class AuthUserStub implements Authenticatable, JWTSubject
         return 'remember_token';
     }
 
-    public function getJWTIdentifier(): int|string
+    public function getJWTIdentifier(): string
     {
-        return $this->id;
+        return (string) $this->id;
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<non-empty-string, mixed>
      */
     public function getJWTCustomClaims(): array
     {

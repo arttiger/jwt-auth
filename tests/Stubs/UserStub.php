@@ -8,18 +8,18 @@ use ArtTiger\JWTAuth\Contracts\JWTSubject;
 
 class UserStub implements JWTSubject
 {
-    public function getJWTIdentifier(): int|string
+    public function getJWTIdentifier(): string
     {
-        return 1;
+        return '1';
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<non-empty-string, mixed>
      */
     public function getJWTCustomClaims(): array
     {
         return [
-            'foo'  => 'bar',
+            'foo' => 'bar',
             'role' => 'admin',
         ];
     }
