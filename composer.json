@@ -16,30 +16,16 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Sean Tymon",
-            "email": "tymon148@gmail.com",
-            "homepage": "https://tymon.xyz",
-            "role": "Forked package creator | Developer"
-        },
-        {
-            "name": "Eric Schricker",
-            "email": "eric.schricker@adiutabyte.de",
-            "role": "Developer"
-        },
-        {
-            "name": "Fabio William Conceição",
-            "email": "messhias@gmail.com",
-            "role": "Developer"
-        },
-        {
-            "name": "Max Snow",
-            "email": "contact@maxsnow.me",
+            "name": "Volodymyr Farylevych",
+            "email": "vfarylevych@gmail.com",
+            "homepage": "https://farylevych.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.3",
         "ext-json": "*",
+        "ext-openssl": "*",
         "illuminate/auth": "^12|^13",
         "illuminate/contracts": "^12|^13",
         "illuminate/http": "^12|^13",

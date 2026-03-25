@@ -140,8 +140,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/voku/portable-ascii" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/phpstan/phpstan-mockery" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/rector/rector" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/sebastian/code-unit" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/sebastian/code-unit-reverse-lookup" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

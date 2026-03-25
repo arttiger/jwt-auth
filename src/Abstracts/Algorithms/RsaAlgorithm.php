@@ -38,7 +38,7 @@ abstract class RsaAlgorithm implements Algorithm
         #[SensitiveParameter] ?string $secret,
         #[SensitiveParameter] array $keys,
     ): void {
-        $publicKey = isset($keys['public'])  && is_string($keys['public'])  ? $keys['public']  : null;
+        $publicKey = isset($keys['public']) && is_string($keys['public'])  ? $keys['public']  : null;
         $privateKey = isset($keys['private']) && is_string($keys['private']) ? $keys['private'] : null;
 
         if ($publicKey === null && $privateKey === null) {

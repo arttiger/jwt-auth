@@ -1,5 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
+use Illuminate\Support\Env;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -15,14 +19,14 @@ return [
     |
     */
 
-    'secret' => env('JWT_SECRET'),
+    'secret' => Env::get('JWT_SECRET'),
 
     /*
     |--------------------------------------------------------------------------
     | JWT Authentication Keys
     |--------------------------------------------------------------------------
     |
-    | The algorithm you are using, will determine whether your tokens are
+    | The algorithm you are using will determine whether your tokens are
     | signed with a random string (defined in `JWT_SECRET`) or using the
     | following public & private keys.
     |
@@ -46,7 +50,7 @@ return [
         |
         */
 
-        'public' => env('JWT_PUBLIC_KEY'),
+        'public' => Env::get('JWT_PUBLIC_KEY'),
 
         /*
         |--------------------------------------------------------------------------
@@ -59,18 +63,18 @@ return [
         |
         */
 
-        'private' => env('JWT_PRIVATE_KEY'),
+        'private' => Env::get('JWT_PRIVATE_KEY'),
 
         /*
         |--------------------------------------------------------------------------
         | Passphrase
         |--------------------------------------------------------------------------
         |
-        | The passphrase for your private key. Can be null if none set.
+        | The passphrase for your private key. Can be null if none is set.
         |
         */
 
-        'passphrase' => env('JWT_PASSPHRASE'),
+        'passphrase' => Env::get('JWT_PASSPHRASE'),
     ],
 
     /*
@@ -81,15 +85,15 @@ return [
     | Specify the length of time (in minutes) that the token will be valid for.
     | Defaults to 1 hour.
     |
-    | You can also set this to null, to yield a never expiring token.
-    | Some people may want this behaviour for e.g. a mobile app.
+    | You can also set this to null to yield a never expiring token.
+    | Some people may want this behavior for e.g., a mobile app.
     | This is not particularly recommended, so make sure you have appropriate
     | systems in place to revoke the token if necessary.
-    | Notice: If you set this to null you should remove 'exp' element from 'required_claims' list.
+    | Notice: If you set this to null, you should remove 'exp' element from 'required_claims' list.
     |
     */
 
-    'ttl' => (int) env('JWT_TTL', 60),
+    'ttl' => (int) Env::get('JWT_TTL', default: 60),
 
     /*
     |--------------------------------------------------------------------------
@@ -110,15 +114,15 @@ return [
     |
     | The refresh ttl defaults to 2 weeks.
     |
-    | You can also set this to null, to yield an infinite refresh time.
+    | You can also set this to null to yield an infinite refresh time.
     | Some may want this instead of never expiring tokens for e.g. a mobile app.
     | This is not particularly recommended, so make sure you have appropriate
     | systems in place to revoke the token if necessary.
     |
     */
 
-    'refresh_iat' => env('JWT_REFRESH_IAT', false),
-    'refresh_ttl' => (int) env('JWT_REFRESH_TTL', 20160),
+    'refresh_iat' => Env::get('JWT_REFRESH_IAT', default: false),
+    'refresh_ttl' => (int) Env::get('JWT_REFRESH_TTL', default: 20160),
 
     /*
     |--------------------------------------------------------------------------
@@ -132,7 +136,7 @@ return [
     |
     */
 
-    'algo' => env('JWT_ALGO', 'HS256'),
+    'algo' => Env::get('JWT_ALGO', default: 'HS256'),
 
     /*
     |--------------------------------------------------------------------------
@@ -161,9 +165,9 @@ return [
     |
     | Specify the claim keys to be persisted when refreshing a token.
     | `sub` and `iat` will automatically be persisted, in
-    | addition to the these claims.
+    | addition to these claims.
     |
-    | Note: If a claim does not exist then it will be ignored.
+    | Note: If a claim does not exist, then it will be ignored.
     |
     */
 
@@ -183,8 +187,8 @@ return [
     | should prevent one authentication request from impersonating another,
     | if 2 tokens happen to have the same id across the 2 different models.
     |
-    | Under specific circumstances, you may want to disable this behaviour
-    | e.g. if you only have one authentication model, then you would save
+    | Under specific circumstances, you may want to disable this behavior
+    | e.g., if you only have one authentication model, then you would save
     | a little on token size.
     |
     */
@@ -198,7 +202,7 @@ return [
     |
     | This property gives the jwt timestamp claims some "leeway".
     | Meaning that if you have any unavoidable slight clock skew on
-    | any of your servers then this will afford you some level of cushioning.
+    | any of your servers, then this will afford you some level of cushioning.
     |
     | This applies to the claims `iat`, `nbf` and `exp`.
     |
@@ -206,7 +210,7 @@ return [
     |
     */
 
-    'leeway' => (int) env('JWT_LEEWAY', 0),
+    'leeway' => (int) Env::get('JWT_LEEWAY', default: 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -218,7 +222,7 @@ return [
     |
     */
 
-    'blacklist_enabled' => env('JWT_BLACKLIST_ENABLED', true),
+    'blacklist_enabled' => Env::get('JWT_BLACKLIST_ENABLED', default: true),
 
     /*
     | -------------------------------------------------------------------------
@@ -229,22 +233,22 @@ return [
     | it is possible that some of them fail, due to token regeneration
     | on every request.
     |
-    | Set grace period in seconds to prevent parallel request failure.
+    | Set the grace period in seconds to prevent parallel request failure.
     |
     */
 
-    'blacklist_grace_period' => (int) env('JWT_BLACKLIST_GRACE_PERIOD', 0),
+    'blacklist_grace_period' => (int) Env::get('JWT_BLACKLIST_GRACE_PERIOD', default: 0),
 
     /*
     |--------------------------------------------------------------------------
     | Show blacklisted token option
     |--------------------------------------------------------------------------
     |
-    | Specify if you want to show black listed token exception on the laravel logs.
+    | Specify if you want to show blacklisted token exception on the laravel logs.
     |
     */
 
-    'show_black_list_exception' => env('JWT_SHOW_BLACKLIST_EXCEPTION', true),
+    'show_black_list_exception' => Env::get('JWT_SHOW_BLACKLIST_EXCEPTION', default: true),
 
     /*
     |--------------------------------------------------------------------------
@@ -290,7 +294,7 @@ return [
         | JWT Provider
         |--------------------------------------------------------------------------
         |
-        | Specify the provider that is used to create and decode the tokens.
+        | Specify the provider used to create and decode the tokens.
         |
         */
 
@@ -301,7 +305,7 @@ return [
         | Authentication Provider
         |--------------------------------------------------------------------------
         |
-        | Specify the provider that is used to authenticate users.
+        | Specify the provider used to authenticate users.
         |
         */
 
@@ -312,7 +316,7 @@ return [
         | Storage Provider
         |--------------------------------------------------------------------------
         |
-        | Specify the provider that is used to store tokens in the blacklist.
+        | Specify the provider used to store tokens in the blacklist.
         |
         */
 
