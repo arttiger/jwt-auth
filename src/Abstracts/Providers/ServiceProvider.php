@@ -28,7 +28,9 @@ use ArtTiger\JWTAuth\Manager;
 use ArtTiger\JWTAuth\Providers\JWT\Lcobucci;
 use ArtTiger\JWTAuth\Providers\JWT\Namshi;
 use ArtTiger\JWTAuth\Validators\PayloadValidator;
+use ArtTiger\JWTAuth\Providers\Auth\Illuminate as IlluminateAuthProvider;
 use Illuminate\Auth\AuthManager;
+use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Config\Repository as ConfigContract;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
@@ -187,6 +189,14 @@ abstract class ServiceProvider extends BaseServiceProvider
 
     protected function registerAuthProvider(): void
     {
+        // IlluminateAuthProvider requires a StatefulGuard but JWTGuard only implements Guard.
+        // Use a contextual binding so that only IlluminateAuthProvider receives the default
+        // auth driver — this avoids registering StatefulGuard globally in the container.
+        $this->app
+            ->when(IlluminateAuthProvider::class)
+            ->needs(StatefulGuard::class)
+            ->give(fn (Application $app) => $app->make(AuthManager::class)->guard());
+
         $this->app->singleton('arttiger.jwt.provider.auth', fn (Application $app): mixed => $this->getConfigInstance($app, 'providers.auth'));
     }
 
